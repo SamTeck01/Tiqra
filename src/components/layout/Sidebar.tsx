@@ -1,12 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { cn, getInitials } from "@/lib/utils";
-import {
-  LayoutDashboard, Lightbulb, Wallet, Settings, LogOut, FileText,
-} from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Home01Icon, DashboardSquare01Icon, File01Icon, Wallet01Icon, Settings01Icon, Logout01Icon, Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
 
 interface NavItem {
   label: string;
@@ -16,34 +16,29 @@ interface NavItem {
 }
 
 const founderNav: NavItem[] = [
-  { label: "Dashboard", href: "/founder/dashboard", icon: <LayoutDashboard size={22} />, matchExact: true },
-  { label: "My Ideas", href: "/founder/ideas", icon: <Lightbulb size={22} /> },
-  { label: "Wallet", href: "/founder/wallet", icon: <Wallet size={22} />, matchExact: true },
-  { label: "Settings", href: "/founder/settings", icon: <Settings size={22} />, matchExact: true },
+  { label: "Dashboard", href: "/founder/dashboard", icon: <HugeiconsIcon icon={DashboardSquare01Icon} size={22}  />, matchExact: true },
+  { label: "My Ideas", href: "/founder/ideas", icon: <HugeiconsIcon icon={File01Icon} size={22}  /> },
+  { label: "Wallet", href: "/founder/wallet", icon: <HugeiconsIcon icon={Wallet01Icon} size={22}  />, matchExact: true },
+  { label: "Settings", href: "/founder/settings", icon: <HugeiconsIcon icon={Settings01Icon} size={22}  />, matchExact: true },
 ];
 
 const earnerNav: NavItem[] = [
-  { label: "Dashboard", href: "/earner/dashboard", icon: <LayoutDashboard size={22} />, matchExact: true },
-  { label: "Surveys", href: "/earner/surveys", icon: <FileText size={22} /> },
-  { label: "Wallet", href: "/earner/wallet", icon: <Wallet size={22} />, matchExact: true },
-  { label: "Settings", href: "/earner/settings", icon: <Settings size={22} />, matchExact: true },
+  { label: "Dashboard", href: "/earner/dashboard", icon: <HugeiconsIcon icon={DashboardSquare01Icon} size={22}  />, matchExact: true },
+  { label: "Surveys", href: "/earner/surveys", icon: <HugeiconsIcon icon={File01Icon} size={22}  /> },
+  { label: "Wallet", href: "/earner/wallet", icon: <HugeiconsIcon icon={Wallet01Icon} size={22}  />, matchExact: true },
+  { label: "Settings", href: "/earner/settings", icon: <HugeiconsIcon icon={Settings01Icon} size={22}  />, matchExact: true },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
-  
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const isFounder = user?.role === "founder" || pathname.startsWith("/founder");
   const navItems = isFounder ? founderNav : earnerNav;
 
-  return (
-    <aside
-      className="w-[324px] min-h-screen flex flex-col fixed top-0 left-0 z-40"
-      style={{
-        background: "linear-gradient(180deg, #9F4EF5 0%, #7C3ACD 100%)",
-        boxShadow: "4px 0 32px rgba(159, 78, 245, 0.25)",
-      }}
-    >
+  const SidebarContent = () => (
+    <>
       {/* Logo */}
       <div className="px-8 pt-10 pb-8 flex items-center gap-3">
         <div className="w-10 h-10 rounded-[12px] bg-white/20 flex items-center justify-center flex-shrink-0 border border-white/20">
@@ -55,6 +50,13 @@ export default function Sidebar() {
             {isFounder ? "Founder" : "Earner"} Panel
           </p>
         </div>
+        {/* Mobile close button */}
+        <button
+          className="ml-auto lg:hidden p-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+          onClick={() => setMobileOpen(false)}
+        >
+          <HugeiconsIcon icon={Cancel01Icon} size={20} className="text-white"  />
+        </button>
       </div>
 
       {/* Divider */}
@@ -71,6 +73,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={cn(
                 "flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[17px] font-normal transition-all duration-200 relative group",
                 isActive
@@ -84,7 +87,7 @@ export default function Sidebar() {
               <span className="flex-1">{item.label}</span>
               {/* Active right indicator */}
               {isActive && (
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-8 bg-white/80 rounded-l-full" />
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-8 bg-[#EDE9FE] rounded-l-full" />
               )}
             </Link>
           );
@@ -119,9 +122,45 @@ export default function Sidebar() {
           title="Sign out"
           className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0"
         >
-          <LogOut size={18} className="text-white/65" />
+          <HugeiconsIcon icon={Logout01Icon} size={18} className="text-white/65"  />
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger */}
+      <button
+        className="fixed top-4 left-4 z-50 lg:hidden w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ background: "linear-gradient(180deg, #9F4EF5 0%, #7C3ACD 100%)" }}
+        onClick={() => setMobileOpen(true)}
+      >
+        <HugeiconsIcon icon={Menu01Icon} size={22} className="text-white"  />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar — desktop fixed, mobile overlay */}
+      <aside
+        className={cn(
+          "w-[324px] min-h-screen flex flex-col fixed top-0 left-0 z-50 transition-transform duration-300",
+          "lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+        style={{
+          background: "linear-gradient(180deg, #9F4EF5 0%, #7C3ACD 100%)",
+          boxShadow: "4px 0 32px rgba(159, 78, 245, 0.25)",
+        }}
+      >
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

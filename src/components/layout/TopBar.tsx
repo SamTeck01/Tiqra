@@ -1,10 +1,10 @@
 "use client";
 
-import { Search, Bell, ChevronDown } from "lucide-react";
+import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { getInitials } from "@/lib/utils";
-import { useState } from "react";
-import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Search01Icon, Notification01Icon } from "@hugeicons/core-free-icons";;
 
 interface TopBarProps {
   title: string;
@@ -24,22 +24,22 @@ export default function TopBar({ title, subtitle, action }: TopBarProps) {
   const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
 
   return (
-    <div className="tiqra-topbar sticky top-0 z-30">
+    <div className="tiqra-topbar sticky top-0 z-30 mobile-page-header">
       {/* Left: title */}
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-[28px] font-semibold text-text-primary leading-tight tracking-[-0.02em]">
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+        <h1 className="text-[20px] lg:text-[28px] font-semibold text-text-primary leading-tight tracking-[-0.02em] truncate">
           {title}
         </h1>
         {subtitle && (
-          <p className="text-[15px] text-text-secondary">{subtitle}</p>
+          <p className="text-[13px] lg:text-[15px] text-text-secondary hidden sm:block">{subtitle}</p>
         )}
       </div>
 
       {/* Right: search + bell + action */}
-      <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="flex items-center gap-2.5 bg-[#F8F9FC] border border-[#E5E7EB] rounded-xl px-4 py-2.5 w-[220px] hover:border-brand-primary transition-colors cursor-pointer">
-          <Search size={18} className="text-text-secondary flex-shrink-0" />
+      <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
+        {/* Search — hidden on mobile */}
+        <div className="hidden md:flex items-center gap-2.5 bg-[#F8F9FC] border border-[#E5E7EB] rounded-xl px-4 py-2.5 w-[180px] lg:w-[220px] hover:border-brand-primary transition-colors cursor-pointer">
+          <HugeiconsIcon icon={Search01Icon} size={18} className="text-text-secondary flex-shrink-0"  />
           <span className="text-[15px] text-text-secondary">Search...</span>
         </div>
 
@@ -47,9 +47,9 @@ export default function TopBar({ title, subtitle, action }: TopBarProps) {
         <div className="relative">
           <button
             onClick={() => setShowNotifs(!showNotifs)}
-            className="relative w-11 h-11 rounded-xl bg-[#F8F9FC] border border-[#E5E7EB] flex items-center justify-center hover:bg-[#EDE9FE] hover:border-brand-primary transition-all"
+            className="relative w-10 h-10 lg:w-11 lg:h-11 rounded-xl bg-[#F8F9FC] border border-[#E5E7EB] flex items-center justify-center hover:bg-[#EDE9FE] hover:border-brand-primary transition-all"
           >
-            <Bell size={20} className="text-text-secondary" />
+            <HugeiconsIcon icon={Notification01Icon} size={20} className="text-text-secondary"  />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#DC2626] text-white text-[10px] font-bold flex items-center justify-center border-2 border-[#FEFEFE]">
                 {unreadCount}
@@ -64,7 +64,7 @@ export default function TopBar({ title, subtitle, action }: TopBarProps) {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowNotifs(false)}
               />
-              <div className="absolute right-0 top-14 z-50 w-80 bg-white border border-[#F3F4F6] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden">
+              <div className="absolute right-0 top-14 z-50 w-72 lg:w-80 bg-white border border-[#F3F4F6] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
                   <h3 className="text-body font-semibold text-text-primary">Notifications</h3>
                   <button className="text-sm text-brand-primary hover:underline">Mark all read</button>

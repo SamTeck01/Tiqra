@@ -54,7 +54,7 @@
 
   /* Main content area */
   .tiqra-main {
-    @apply ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col;
+    @apply lg:ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col pb-24 lg:pb-0;
   }
 
   /* Top bar */
@@ -261,5 +261,53 @@
     background-size: 936px 100%;
     animation: shimmer 1.4s infinite linear;
     @apply rounded-xl;
+  }
+
+  /* Mobile bottom navigation */
+  .mobile-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#E5E7EB] flex items-center justify-around px-2 lg:hidden;
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+    height: 72px;
+  }
+
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all flex-1;
+  }
+
+  .mobile-nav-item.active {
+    @apply text-brand-primary;
+  }
+
+  .mobile-nav-item:not(.active) {
+    @apply text-[#9CA3AF];
+  }
+
+  /* Page top padding for mobile (accounts for hamburger) */
+  .mobile-page-header {
+    @apply pt-16 lg:pt-0;
+  }
+
+  /* Responsive tiqra-topbar */
+  .tiqra-topbar {
+    @apply flex items-center justify-between px-4 lg:px-8 py-4 lg:py-5 border-b border-[#F3F4F6] bg-[#FEFEFE];
+  }
+
+  /* Responsive card padding */
+  .tiqra-card {
+    @apply bg-white rounded-[20px] lg:rounded-[30px] border border-[#F3F4F6] p-4 lg:p-6;
+  }
+
+  /* Page content padding */
+  .page-content {
+    @apply px-4 lg:px-8 py-4 lg:py-8;
+  }
+
+  /* Hide scrollbar but allow scroll */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

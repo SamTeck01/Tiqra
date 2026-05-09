@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
   description:
     "Validate your startup idea with real human feedback. Tiqra gives founders signal-based insights to Proceed, Pivot, or Kill – before investing a naira.",
   keywords: ["startup validation", "market research", "Nigeria", "founder tools"],
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   openGraph: {
     title: "Tiqra – Truth-First Market Intelligence",
     description: "Validate your startup idea with verified human feedback.",
@@ -35,6 +37,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <MobileBottomNav />
       </body>
     </html>
   );

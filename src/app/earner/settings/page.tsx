@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
-import {
-  User, Bell, Lock, Shield, LogOut, ChevronRight, Check,
-  Camera, Mail, Phone, MapPin, Briefcase, Eye, EyeOff,
-  Star, Target, Globe, Hash
-} from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserIcon, Notification01Icon, LockIcon, SecurityLockIcon, Logout01Icon, ArrowRight01Icon, CheckmarkCircle01Icon, Camera01Icon, Mail01Icon, SmartPhone01Icon, Location01Icon, Building04Icon, StarIcon, Target01Icon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";;
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
 import TopBar from "@/components/layout/TopBar";
@@ -66,20 +63,38 @@ export default function EarnerSettingsPage() {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, on: !n.on } : n)));
 
   const navItems: { key: Section; label: string; icon: React.ReactNode }[] = [
-    { key: "profile", label: "Edit Profile", icon: <User size={20} /> },
-    { key: "demographics", label: "My Demographics", icon: <Target size={20} /> },
-    { key: "notifications", label: "Notifications", icon: <Bell size={20} /> },
-    { key: "password", label: "Password & Security", icon: <Lock size={20} /> },
-    { key: "privacy", label: "Privacy", icon: <Shield size={20} /> },
+    { key: "profile", label: "Edit Profile", icon: <HugeiconsIcon icon={UserIcon} size={20}  /> },
+    { key: "demographics", label: "Demographics", icon: <HugeiconsIcon icon={Target01Icon} size={20}  /> },
+    { key: "notifications", label: "Notifications", icon: <HugeiconsIcon icon={Notification01Icon} size={20}  /> },
+    { key: "password", label: "Password", icon: <HugeiconsIcon icon={LockIcon} size={20}  /> },
+    { key: "privacy", label: "Privacy", icon: <HugeiconsIcon icon={SecurityLockIcon} size={20}  /> },
   ];
 
   return (
     <div className="flex flex-col min-h-screen">
       <TopBar title="Settings" subtitle="Manage your account and preferences." />
 
-      <div className="px-8 py-8 flex gap-8">
-        {/* Left nav */}
-        <div className="w-72 flex-shrink-0 flex flex-col gap-2">
+      {/* Mobile: horizontal tab bar */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 px-4 pt-4 lg:hidden">
+        {navItems.map(({ key, label, icon }) => (
+          <button
+            key={key}
+            onClick={() => setSection(key)}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex-shrink-0",
+              section === key
+                ? "bg-[#EDE9FE] text-brand-primary"
+                : "bg-white border border-[#E5E7EB] text-text-secondary"
+            )}
+          >
+            {icon} {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="page-content flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Desktop Left nav */}
+        <div className="hidden lg:flex w-72 flex-shrink-0 flex-col gap-2">
           {/* Avatar */}
           <div className="flex flex-col items-center gap-3 p-6 bg-white border border-[#F3F4F6] rounded-2xl mb-4">
             <div className="relative">
@@ -89,7 +104,7 @@ export default function EarnerSettingsPage() {
                 </span>
               </div>
               <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center border-2 border-white">
-                <Camera size={14} className="text-white" />
+                <HugeiconsIcon icon={Camera01Icon} size={14} className="text-white"  />
               </button>
             </div>
             <div className="text-center">
@@ -97,7 +112,7 @@ export default function EarnerSettingsPage() {
               <p className="text-sm text-text-secondary capitalize">{user?.role || "Earner"}</p>
               {/* Reliability badge */}
               <div className="flex items-center gap-1 mt-1 justify-center">
-                <Star size={14} className="text-[#D97706]" fill="#D97706" />
+                <HugeiconsIcon icon={StarIcon} size={14} className="text-[#D97706]"  />
                 <span className="text-sm font-medium text-[#D97706]">
                   {user?.reliabilityScore ?? 92}% reliable
                 </span>
@@ -118,7 +133,7 @@ export default function EarnerSettingsPage() {
             >
               <span className={section === key ? "text-brand-primary" : "text-text-muted"}>{icon}</span>
               {label}
-              <ChevronRight size={16} className="ml-auto opacity-50" />
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-auto opacity-50"  />
             </button>
           ))}
 
@@ -128,7 +143,7 @@ export default function EarnerSettingsPage() {
             onClick={logout}
             className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-body text-[#DC2626] hover:bg-[#FEE2E2] transition-all"
           >
-            <LogOut size={20} /> Sign Out
+            <HugeiconsIcon icon={Logout01Icon} size={20}  /> Sign Out
           </button>
         </div>
 
@@ -137,16 +152,16 @@ export default function EarnerSettingsPage() {
 
           {/* ── Profile ── */}
           {section === "profile" && (
-            <div className="bg-white border border-[#F3F4F6] rounded-2xl p-8 flex flex-col gap-6">
-              <h2 className="text-[24px] font-semibold text-text-primary">Edit Profile</h2>
-              <div className="flex flex-col gap-5">
+            <div className="bg-white border border-[#F3F4F6] rounded-2xl p-5 lg:p-8 flex flex-col gap-5 lg:gap-6">
+              <h2 className="text-[18px] lg:text-[24px] font-semibold text-text-primary">Edit Profile</h2>
+              <div className="flex flex-col gap-4 lg:gap-5">
                 {[
-                  { label: "Full Name", key: "name", icon: User, type: "text", placeholder: "Your full name" },
-                  { label: "Email Address", key: "email", icon: Mail, type: "email", placeholder: "you@example.com" },
-                  { label: "Phone Number", key: "phone", icon: Phone, type: "tel", placeholder: "+234 800 000 0000" },
-                  { label: "Location", key: "location", icon: MapPin, type: "text", placeholder: "City, Country" },
-                  { label: "Occupation", key: "occupation", icon: Briefcase, type: "text", placeholder: "Your occupation" },
-                ].map(({ label, key, icon: Icon, type, placeholder }) => (
+                  { label: "Full Name", key: "name", icon: <HugeiconsIcon icon={UserIcon} size={18} className="text-text-muted"  />, type: "text", placeholder: "Your full name" },
+                  { label: "Email Address", key: "email", icon: <HugeiconsIcon icon={Mail01Icon} size={18} className="text-text-muted"  />, type: "email", placeholder: "you@example.com" },
+                  { label: "Phone Number", key: "phone", icon: <HugeiconsIcon icon={SmartPhone01Icon} size={18} className="text-text-muted"  />, type: "tel", placeholder: "+234 800 000 0000" },
+                  { label: "Location", key: "location", icon: <HugeiconsIcon icon={Location01Icon} size={18} className="text-text-muted"  />, type: "text", placeholder: "City, Country" },
+                  { label: "Occupation", key: "occupation", icon: <HugeiconsIcon icon={Building04Icon} size={18} className="text-text-muted"  />, type: "text", placeholder: "Your occupation" },
+                ].map(({ label, key, icon, type, placeholder }) => (
                   <div key={key}>
                     <label className="tiqra-label">{label}</label>
                     <div className="relative">
@@ -157,13 +172,13 @@ export default function EarnerSettingsPage() {
                         placeholder={placeholder}
                         className="tiqra-input pl-11"
                       />
-                      <Icon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2">{icon}</span>
                     </div>
                   </div>
                 ))}
               </div>
               <button onClick={handleSave} className="btn-primary w-fit gap-2">
-                {saved ? <><Check size={18} /> Saved!</> : "Save Changes"}
+                {saved ? <><HugeiconsIcon icon={CheckmarkCircle01Icon} size={18}  /> Saved!</> : "Save Changes"}
               </button>
             </div>
           )}
@@ -252,7 +267,7 @@ export default function EarnerSettingsPage() {
               </div>
 
               <button onClick={handleSave} className="btn-primary w-fit gap-2">
-                {saved ? <><Check size={18} /> Saved!</> : "Save Demographics"}
+                {saved ? <><HugeiconsIcon icon={CheckmarkCircle01Icon} size={18} /> Saved!</> : "Save Demographics"}
               </button>
             </div>
           )}
@@ -281,7 +296,7 @@ export default function EarnerSettingsPage() {
                 ))}
               </div>
               <button onClick={handleSave} className="btn-primary w-fit gap-2">
-                {saved ? <><Check size={18} /> Saved!</> : "Save Preferences"}
+                {saved ? <><HugeiconsIcon icon={CheckmarkCircle01Icon} size={18} /> Saved!</> : "Save Preferences"}
               </button>
             </div>
           )}
@@ -296,7 +311,7 @@ export default function EarnerSettingsPage() {
                   <div className="relative">
                     <input type={showCurrentPw ? "text" : "password"} className="tiqra-input pr-12" placeholder="••••••••" />
                     <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary">
-                      {showCurrentPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showCurrentPw ? <HugeiconsIcon icon={ViewOffIcon} size={18} /> : <HugeiconsIcon icon={ViewIcon} size={18} />}
                     </button>
                   </div>
                 </div>
@@ -305,7 +320,7 @@ export default function EarnerSettingsPage() {
                   <div className="relative">
                     <input type={showNewPw ? "text" : "password"} className="tiqra-input pr-12" placeholder="Min. 8 characters" />
                     <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary">
-                      {showNewPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showNewPw ? <HugeiconsIcon icon={ViewOffIcon} size={18} /> : <HugeiconsIcon icon={ViewIcon} size={18} />}
                     </button>
                   </div>
                 </div>
@@ -315,7 +330,7 @@ export default function EarnerSettingsPage() {
                 </div>
               </div>
               <button onClick={handleSave} className="btn-primary w-fit gap-2">
-                {saved ? <><Check size={18} /> Updated!</> : "Update Password"}
+                {saved ? <><HugeiconsIcon icon={CheckmarkCircle01Icon} size={18} /> Updated!</> : "Update Password"}
               </button>
             </div>
           )}

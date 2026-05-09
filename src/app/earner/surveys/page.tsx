@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, ArrowRight, Search, Filter, CheckCircle2, Star } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Clock01Icon, ArrowRight01Icon, Search01Icon, CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";;
 import { cn } from "@/lib/utils";
 import TopBar from "@/components/layout/TopBar";
 
@@ -36,45 +37,45 @@ export default function EarnerSurveysPage() {
     <div className="flex flex-col min-h-screen">
       <TopBar title="Available Surveys" subtitle="Complete surveys and earn real money." />
 
-      <div className="px-8 py-8 flex flex-col gap-6">
-        {/* Search + filter bar */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex-1">
-            <Search size={20} className="text-text-secondary flex-shrink-0" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search surveys..."
-              className="flex-1 outline-none text-body text-text-primary placeholder:text-text-secondary bg-transparent"
-            />
-          </div>
-          <div className="flex gap-2">
-            {(["available", "completed", "all"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilterStatus(f)}
-                className={cn(
-                  "px-4 py-3 rounded-xl text-body capitalize transition-all border",
-                  filterStatus === f
-                    ? "bg-brand-primary text-white border-brand-primary"
-                    : "bg-white text-text-secondary border-[#E5E7EB] hover:border-brand-primary"
-                )}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+      <div className="page-content flex flex-col gap-5 lg:gap-6">
+        {/* Search bar */}
+        <div className="flex items-center gap-2 bg-white border border-[#E5E7EB] rounded-xl px-3 py-2.5 lg:px-4 lg:py-3">
+          <HugeiconsIcon icon={Search01Icon} size={17} className="text-text-secondary flex-shrink-0"  />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search surveys..."
+            className="flex-1 outline-none text-sm lg:text-body text-text-primary placeholder:text-text-secondary bg-transparent"
+          />
         </div>
 
-        {/* Category chips */}
-        <div className="flex gap-2 flex-wrap">
+        {/* Status filter pills */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          {(["available", "completed", "all"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilterStatus(f)}
+              className={cn(
+                "px-3 py-2 lg:px-4 lg:py-2.5 rounded-xl text-sm capitalize transition-all border whitespace-nowrap flex-shrink-0",
+                filterStatus === f
+                  ? "bg-brand-primary text-white border-brand-primary"
+                  : "bg-white text-text-secondary border-[#E5E7EB] hover:border-brand-primary"
+              )}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* Category chips — scrollable */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all border",
+                "px-3 py-1.5 rounded-full text-xs lg:text-sm font-medium transition-all border whitespace-nowrap flex-shrink-0",
                 activeCategory === cat
                   ? "bg-brand-primary text-white border-brand-primary"
                   : "bg-white text-text-secondary border-[#E5E7EB] hover:border-brand-primary"
@@ -86,19 +87,19 @@ export default function EarnerSurveysPage() {
         </div>
 
         {/* Results count */}
-        <p className="text-sm text-text-secondary">
+        <p className="text-xs lg:text-sm text-text-secondary">
           {filtered.length} survey{filtered.length !== 1 ? "s" : ""} found
         </p>
 
         {/* Survey cards */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 lg:gap-4">
           {filtered.length === 0 ? (
-            <div className="tiqra-card flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-[#EDE9FE] flex items-center justify-center">
-                <Search size={32} className="text-brand-primary" />
+            <div className="tiqra-card flex flex-col items-center justify-center py-16 lg:py-20 gap-4">
+              <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-[#EDE9FE] flex items-center justify-center">
+                <HugeiconsIcon icon={Search01Icon} size={28} className="text-brand-primary"  />
               </div>
-              <p className="text-[24px] font-semibold text-text-primary">No surveys found</p>
-              <p className="text-body text-text-secondary">Try adjusting your search or filters</p>
+              <p className="text-[18px] lg:text-[24px] font-semibold text-text-primary">No surveys found</p>
+              <p className="text-sm lg:text-body text-text-secondary">Try adjusting your search or filters</p>
             </div>
           ) : (
             filtered.map((survey) => (
@@ -106,57 +107,58 @@ export default function EarnerSurveysPage() {
                 key={survey.id}
                 onClick={() => survey.status === "available" && router.push(`/earner/surveys/${survey.id}`)}
                 className={cn(
-                  "flex items-center justify-between p-5 bg-white border border-[#F3F4F6] rounded-2xl transition-all",
+                  "p-4 lg:p-5 bg-white border border-[#F3F4F6] rounded-2xl transition-all",
                   survey.status === "available"
                     ? "hover:shadow-card-hover cursor-pointer"
                     : "opacity-70 cursor-default"
                 )}
               >
-                <div className="flex items-center gap-5">
+                <div className="flex items-start justify-between gap-3">
                   {/* Left: category + info */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs bg-[#EDE9FE] text-brand-primary px-2.5 py-0.5 rounded-full font-medium">
                         {survey.category}
                       </span>
                       {survey.status === "completed" && (
                         <span className="flex items-center gap-1 text-xs bg-[#DCFCE7] text-[#16A34A] px-2.5 py-0.5 rounded-full font-medium">
-                          <CheckCircle2 size={12} /> Completed
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} size={11}  /> Completed
                         </span>
                       )}
                     </div>
-                    <h3 className="text-body font-semibold text-text-primary">{survey.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-text-secondary">
-                      <span className="flex items-center gap-1"><Clock size={13} /> {survey.duration}</span>
+                    <h3 className="text-[14px] lg:text-body font-semibold text-text-primary line-clamp-2">{survey.title}</h3>
+                    <div className="flex items-center gap-3 lg:gap-4 text-xs lg:text-sm text-text-secondary flex-wrap">
+                      <span className="flex items-center gap-1"><HugeiconsIcon icon={Clock01Icon} size={11}  /> {survey.duration}</span>
                       <span>{survey.questions} questions</span>
-                      <span>{survey.responses}/{survey.total} responses</span>
+                      <span className="hidden sm:inline">{survey.responses}/{survey.total} responses</span>
                     </div>
                     {/* mini progress */}
-                    <div className="w-48 h-1.5 rounded-full bg-[#EDE9FE] overflow-hidden">
+                    <div className="w-full max-w-[200px] h-1.5 rounded-full bg-[#EDE9FE] overflow-hidden">
                       <div
                         className="h-full bg-brand-primary rounded-full"
                         style={{ width: `${(survey.responses / survey.total) * 100}%` }}
                       />
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-6 flex-shrink-0">
-                  <div className="text-right">
-                    <p className="text-[24px] font-bold text-text-primary">
-                      ₦{survey.reward.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-text-secondary">Reward</p>
-                  </div>
-                  {survey.status === "available" ? (
-                    <button className="flex items-center gap-2 bg-[#EDE9FE] text-brand-primary px-5 py-3 rounded-xl text-body font-medium hover:bg-brand-primary hover:text-white transition-all">
-                      Start <ArrowRight size={18} />
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2 bg-[#F3F4F6] text-text-secondary px-5 py-3 rounded-xl text-body">
-                      <CheckCircle2 size={18} /> Done
+                  {/* Right: reward + CTA */}
+                  <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                    <div className="text-right">
+                      <p className="text-[18px] lg:text-[24px] font-bold text-text-primary">
+                        ₦{survey.reward.toLocaleString()}
+                      </p>
+                      <p className="text-xs lg:text-sm text-text-secondary">Reward</p>
                     </div>
-                  )}
+                    {survey.status === "available" ? (
+                      <button className="flex items-center gap-1.5 bg-[#EDE9FE] text-brand-primary px-3 py-2 lg:px-5 lg:py-3 rounded-xl text-sm lg:text-body font-medium hover:bg-brand-primary hover:text-white transition-all">
+                        Start <HugeiconsIcon icon={ArrowRight01Icon} size={15}  />
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1.5 bg-[#F3F4F6] text-text-secondary px-3 py-2 lg:px-5 rounded-xl text-sm">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} size={15}  /> Done
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))

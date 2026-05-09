@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
-import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ViewIcon, ViewOffIcon, ArrowRight01Icon, Loading03Icon } from "@hugeicons/core-free-icons";;
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,14 +27,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-[#FEFEFE]">
-      {/* Left panel */}
+      {/* Left panel — hidden on mobile */}
       <div
         className="hidden lg:flex w-[594px] flex-shrink-0 rounded-[40px] m-3 flex-col relative overflow-hidden"
         style={{ background: "linear-gradient(136deg, #9F4EF5 0%, #E5CAFC 100%)" }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-white text-center px-12">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6 border border-white/20">
               <span className="text-white font-bold text-3xl">T</span>
             </div>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
@@ -46,13 +47,21 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col justify-center px-8 lg:px-20 py-12 max-w-[700px] mx-auto w-full">
+      {/* Right panel — full width on mobile */}
+      <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-20 py-10 lg:py-12 w-full max-w-[700px] mx-auto">
+        {/* Mobile logo */}
+        <div className="flex items-center gap-3 mb-8 lg:hidden">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #9F4EF5, #7C3ACD)" }}>
+            <span className="text-white font-bold text-lg">T</span>
+          </div>
+          <span className="text-[22px] font-bold text-text-primary tracking-tight">Tiqra</span>
+        </div>
+
         <div className="mb-8">
-          <h1 className="text-[32px] font-semibold text-text-primary leading-[150%] tracking-[-0.03em]">
+          <h1 className="text-[28px] lg:text-[32px] font-semibold text-text-primary leading-[150%] tracking-[-0.03em]">
             Welcome back
           </h1>
-          <p className="text-lg text-text-primary mt-1">
+          <p className="text-base lg:text-lg text-text-primary mt-1">
             <span className="text-text-secondary">Don't have an account?</span>{" "}
             <Link href="/auth/register" className="text-brand-primary font-medium hover:underline">
               Sign up
@@ -61,7 +70,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="mb-5 p-4 bg-[#FEE2E2] border border-[#DC2626]/20 rounded-xl text-[#DC2626] text-body">
+          <div className="mb-5 p-4 bg-[#FEE2E2] border border-[#DC2626]/20 rounded-xl text-[#DC2626] text-sm lg:text-body">
             {error}
           </div>
         )}
@@ -100,7 +109,7 @@ export default function LoginPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <HugeiconsIcon icon={ViewOffIcon} size={20}  /> : <HugeiconsIcon icon={ViewIcon} size={20}  />}
               </button>
             </div>
           </div>
@@ -111,9 +120,9 @@ export default function LoginPage() {
             className="btn-primary w-full justify-center mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <Loader2 size={20} className="animate-spin" />
+              <HugeiconsIcon icon={Loading03Icon} size={20} className="animate-spin"  />
             ) : (
-              <>Sign in <ArrowRight size={20} /></>
+              <>Sign in <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>
             )}
           </button>
         </form>
@@ -121,15 +130,12 @@ export default function LoginPage() {
         <div className="flex flex-col gap-3 mt-6">
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-[#E5E7EB]" />
-            <span className="text-body text-text-secondary">Or continue with</span>
+            <span className="text-sm lg:text-body text-text-secondary">Or continue with</span>
             <div className="h-px flex-1 bg-[#E5E7EB]" />
           </div>
           <button className="btn-secondary w-full justify-center gap-3">
             <svg width="20" height="20" viewBox="0 0 20 20">
-              <path
-                d="M18.77 8.2H10.18v3.46h4.94c-.46 2.11-2.26 3.46-4.94 3.46-3.04 0-5.49-2.46-5.49-5.5s2.45-5.5 5.49-5.5c1.39 0 2.61.47 3.57 1.38l2.54-2.54C14.83 1.96 12.63 1 10.18 1 5.12 1 1 5.12 1 10.18s4.12 9.18 9.18 9.18c5.24 0 8.72-3.68 8.72-8.88 0-.59-.06-1.18-.13-1.28z"
-                fill="#4285F4"
-              />
+              <path d="M18.77 8.2H10.18v3.46h4.94c-.46 2.11-2.26 3.46-4.94 3.46-3.04 0-5.49-2.46-5.49-5.5s2.45-5.5 5.49-5.5c1.39 0 2.61.47 3.57 1.38l2.54-2.54C14.83 1.96 12.63 1 10.18 1 5.12 1 1 5.12 1 10.18s4.12 9.18 9.18 9.18c5.24 0 8.72-3.68 8.72-8.88 0-.59-.06-1.18-.13-1.28z" fill="#4285F4" />
             </svg>
             Continue with Google
           </button>
