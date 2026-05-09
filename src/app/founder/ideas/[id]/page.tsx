@@ -1,15 +1,11 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSurveyStore } from "@/store/survey.store";
 import { formatNairaShort } from "@/lib/utils";
-import {
-  ArrowLeft, Users, Clock, TrendingUp, AlertTriangle,
-  CheckCircle2, RotateCcw, XCircle, BarChart3, List, FileText,
-  ChevronRight, Pause, Play, Activity
-} from "lucide-react";
+import { ArrowLeft01Icon, UserGroupIcon, Clock01Icon, ChartIncreaseIcon, Alert02Icon, CheckmarkCircle01Icon, RotateLeft01Icon, CancelCircleIcon, ChartBarBigIcon, ListViewIcon, File01Icon, ArrowRight01Icon, PauseIcon, PlayIcon, Activity01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 const MOCK_RESPONSES = [
@@ -39,19 +35,19 @@ const MOCK_REPORT = {
 const verdictConfig = {
   Proceed: {
     class: "bg-[#DCFCE7] text-[#16A34A] border-[#16A34A]",
-    icon: CheckCircle2,
+    icon: CheckmarkCircle01Icon,
     label: "✓ Proceed",
     description: "Strong market signal. Move forward.",
   },
   Pivot: {
     class: "bg-[#FEF3C7] text-[#D97706] border-[#D97706]",
-    icon: RotateCcw,
+    icon: RotateLeft01Icon,
     label: "↩ Pivot",
     description: "Adjust your approach based on feedback.",
   },
   Kill: {
     class: "bg-[#FEE2E2] text-[#DC2626] border-[#DC2626]",
-    icon: XCircle,
+    icon: CancelCircleIcon,
     label: "✕ Kill",
     description: "Insufficient market demand. Reconsider.",
   },
@@ -84,7 +80,7 @@ export default function IdeaDetailPage() {
     return (
       <div className="ml-[324px] p-8">
         <button onClick={() => router.back()} className="btn-secondary mb-6">
-          <ArrowLeft size={18} /> Back
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back
         </button>
         <p className="text-h3 text-text-secondary">Survey not found</p>
       </div>
@@ -106,7 +102,7 @@ export default function IdeaDetailPage() {
             onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors mb-2"
           >
-            <ArrowLeft size={18} /> Back to ideas
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back to ideas
           </button>
           <h1 className="text-[32px] font-semibold text-text-primary">{activeSurvey.title}</h1>
           <p className="text-lg text-text-secondary">
@@ -116,12 +112,12 @@ export default function IdeaDetailPage() {
         <div className="flex items-center gap-3">
           {activeSurvey.status === "live" && (
             <button className="btn-secondary gap-2">
-              <Pause size={18} /> Pause
+              <HugeiconsIcon icon={PauseIcon} size={18}  /> PauseIcon
             </button>
           )}
           {activeSurvey.status === "paused" && (
             <button className="btn-primary gap-2">
-              <Play size={18} /> Resume
+              <HugeiconsIcon icon={PlayIcon} size={18}  /> Resume
             </button>
           )}
           <span
@@ -147,29 +143,29 @@ export default function IdeaDetailPage() {
       <div className="grid grid-cols-4 gap-5 px-8 py-6 border-b border-[#F3F4F6]">
         {[
           {
-            icon: Users,
+            icon: UserGroupIcon,
             label: "Responses",
             value: `${activeSurvey.respondentsCompleted}/${activeSurvey.respondentsRequired}`,
           },
           {
-            icon: TrendingUp,
+            icon: ChartIncreaseIcon,
             label: "Completion",
             value: `${Math.round(progress)}%`,
           },
           {
-            icon: Clock,
+            icon: Clock01Icon,
             label: "Avg. time",
             value: "3m 42s",
           },
           {
-            icon: BarChart3,
+            icon: ChartBarBigIcon,
             label: "Escrowed",
             value: formatNairaShort(activeSurvey.escrowAmount || 0),
           },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-text-secondary text-sm">
-              <Icon size={16} /> {label}
+              <HugeiconsIcon icon={Icon} size={16} /> {label}
             </div>
             <span className="text-[24px] font-semibold text-text-primary">{value}</span>
           </div>
@@ -245,14 +241,14 @@ export default function IdeaDetailPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center">
-                    <FileText size={20} className="text-brand-primary" />
+                    <HugeiconsIcon icon={File01Icon} size={20} className="text-brand-primary"  />
                   </div>
                   <div>
                     <p className="text-body font-medium text-text-primary">Live Track</p>
                     <p className="text-sm text-text-secondary">See real-time data as responses come in</p>
                   </div>
                 </div>
-                <ChevronRight size={20} className="text-text-secondary" />
+                <HugeiconsIcon icon={ArrowRight01Icon} size={20} className="text-text-secondary"  />
               </Link>
             )}
             {activeSurvey.status === "completed" && (
@@ -262,14 +258,14 @@ export default function IdeaDetailPage() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center">
-                    <FileText size={20} className="text-white" />
+                    <HugeiconsIcon icon={File01Icon} size={20} className="text-white"  />
                   </div>
                   <div>
                     <p className="text-body font-medium text-text-primary">View AI Report</p>
                     <p className="text-sm text-text-secondary">See the full GO / PIVOT / KILL verdict</p>
                   </div>
                 </div>
-                <ChevronRight size={20} className="text-brand-primary" />
+                <HugeiconsIcon icon={ArrowRight01Icon} size={20} className="text-brand-primary"  />
               </Link>
             )}
           </div>
@@ -283,7 +279,7 @@ export default function IdeaDetailPage() {
                 All Responses ({MOCK_RESPONSES.length})
               </h2>
               <button className="btn-secondary gap-2">
-                <List size={18} /> Export CSV
+                <HugeiconsIcon icon={ListViewIcon} size={18}  /> Export CSV
               </button>
             </div>
             {MOCK_RESPONSES.map((resp) => (
@@ -293,7 +289,7 @@ export default function IdeaDetailPage() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center">
-                    <Users size={18} className="text-brand-primary" />
+                    <HugeiconsIcon icon={UserGroupIcon} size={18} className="text-brand-primary"  />
                   </div>
                   <div>
                     <p className="text-body font-medium text-text-primary">{resp.respondent}</p>
@@ -305,7 +301,7 @@ export default function IdeaDetailPage() {
                 <div className="flex items-center gap-4">
                   {resp.flagged && (
                     <span className="flex items-center gap-1 text-sm text-[#D97706] bg-[#FEF3C7] px-3 py-1 rounded-full">
-                      <AlertTriangle size={14} /> Flagged
+                      <HugeiconsIcon icon={Alert02Icon} size={14}  /> Flagged
                     </span>
                   )}
                   <span
@@ -320,7 +316,7 @@ export default function IdeaDetailPage() {
                   >
                     {resp.score}% quality
                   </span>
-                  <ChevronRight size={18} className="text-text-secondary" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} size={18} className="text-text-secondary"  />
                 </div>
               </div>
             ))}
@@ -337,7 +333,7 @@ export default function IdeaDetailPage() {
                 <span className="text-[32px] font-bold">{verdictCfg.label}</span>
                 <p className="text-body mt-1">{verdictCfg.description}</p>
               </div>
-              <verdictCfg.icon size={48} />
+              <HugeiconsIcon icon={verdictCfg.icon} size={48} />
             </div>
 
             {/* Metrics */}
@@ -384,7 +380,7 @@ export default function IdeaDetailPage() {
               <div className="flex flex-col gap-3">
                 {MOCK_REPORT.topObjections.map((obj, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 bg-[#FEF3C7] rounded-xl">
-                    <AlertTriangle size={16} className="text-[#D97706] flex-shrink-0" />
+                    <HugeiconsIcon icon={Alert02Icon} size={16} className="text-[#D97706] flex-shrink-0"  />
                     <span className="text-body text-[#D97706]">{obj}</span>
                   </div>
                 ))}

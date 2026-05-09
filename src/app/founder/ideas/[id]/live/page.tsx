@@ -1,13 +1,9 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSurveyStore } from "@/store/survey.store";
-import {
-  ArrowLeft, Users, Clock, TrendingUp, BarChart3,
-  Zap, RefreshCw, CheckCircle2, RotateCcw, XCircle,
-  ArrowUpRight, Activity
-} from "lucide-react";
+import { ArrowLeft01Icon, UserGroupIcon, Clock01Icon, ChartIncreaseIcon, ChartBarBigIcon, FlashIcon, RefreshIcon, CheckmarkCircle01Icon, RotateLeft01Icon, CancelCircleIcon, ArrowUpRight01Icon, Activity01Icon } from "@hugeicons/core-free-icons";
 import { formatNairaShort } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -54,9 +50,9 @@ export default function LiveTrackPage() {
     demandSignal >= 65 ? "Proceed" : demandSignal >= 40 ? "Pivot" : "Kill";
 
   const verdictConfig = {
-    Proceed: { color: "#16A34A", bg: "#DCFCE7", icon: CheckCircle2, label: "Trending: Proceed" },
-    Pivot: { color: "#D97706", bg: "#FEF3C7", icon: RotateCcw, label: "Trending: Pivot" },
-    Kill: { color: "#DC2626", bg: "#FEE2E2", icon: XCircle, label: "Trending: Kill" },
+    Proceed: { color: "#16A34A", bg: "#DCFCE7", icon: CheckmarkCircle01Icon, label: "Trending: Proceed" },
+    Pivot: { color: "#D97706", bg: "#FEF3C7", icon: RotateLeft01Icon, label: "Trending: Pivot" },
+    Kill: { color: "#DC2626", bg: "#FEE2E2", icon: CancelCircleIcon, label: "Trending: Kill" },
   };
   const vc = verdictConfig[verdictProjected];
 
@@ -69,7 +65,7 @@ export default function LiveTrackPage() {
             onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
           >
-            <ArrowLeft size={20} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
           </button>
           <div>
             <h1 className="text-[24px] font-semibold text-text-primary">
@@ -89,7 +85,7 @@ export default function LiveTrackPage() {
           onClick={handleRefresh}
           className={cn("btn-secondary gap-2", refreshing && "opacity-70")}
         >
-          <RefreshCw size={16} className={cn(refreshing && "animate-spin")} />
+          <HugeiconsIcon icon={RefreshIcon} size={16} className={cn(refreshing && "animate-spin")}  />
           Refresh
         </button>
       </div>
@@ -98,14 +94,14 @@ export default function LiveTrackPage() {
         {/* Live metrics strip */}
         <div className="grid grid-cols-4 gap-5">
           {[
-            { icon: Users, label: "Responses", value: `${activeSurvey?.respondentsCompleted || 32}/${activeSurvey?.respondentsRequired || 50}`, sub: `${Math.round(progress)}% complete` },
-            { icon: Activity, label: "Demand Signal", value: `${demandSignal}%`, sub: "of respondents interested" },
-            { icon: Clock, label: "Avg. Time", value: "3m 42s", sub: "per response" },
-            { icon: BarChart3, label: "Quality Score", value: "82%", sub: "avg. response quality" },
+            { icon: UserGroupIcon, label: "Responses", value: `${activeSurvey?.respondentsCompleted || 32}/${activeSurvey?.respondentsRequired || 50}`, sub: `${Math.round(progress)}% complete` },
+            { icon: Activity01Icon, label: "Demand Signal", value: `${demandSignal}%`, sub: "of respondents interested" },
+            { icon: Clock01Icon, label: "Avg. Time", value: "3m 42s", sub: "per response" },
+            { icon: ChartBarBigIcon, label: "Quality Score", value: "82%", sub: "avg. response quality" },
           ].map(({ icon: Icon, label, value, sub }) => (
             <div key={label} className="tiqra-card-sm flex flex-col gap-2">
               <div className="flex items-center gap-2 text-text-secondary text-sm">
-                <Icon size={16} />
+                <HugeiconsIcon icon={Icon} size={16} />
                 <span>{label}</span>
               </div>
               <span className="text-[28px] font-bold text-text-primary">{value}</span>
@@ -133,11 +129,11 @@ export default function LiveTrackPage() {
           {/* Verdict projection */}
           <div className={cn("p-6 rounded-2xl flex flex-col gap-4")} style={{ backgroundColor: vc.bg }}>
             <div className="flex items-center gap-2">
-              <Zap size={16} style={{ color: vc.color }} />
+              <HugeiconsIcon icon={FlashIcon} size={16} style={{ color: vc.color }}  />
               <span className="text-sm font-medium" style={{ color: vc.color }}>AI Early Projection</span>
             </div>
             <div className="flex items-center gap-4">
-              <vc.icon size={40} style={{ color: vc.color }} />
+              <HugeiconsIcon icon={vc.icon} size={40} style={{ color: vc.color }} />
               <div>
                 <p className="text-[28px] font-bold" style={{ color: vc.color }}>{vc.label}</p>
                 <p className="text-sm" style={{ color: vc.color, opacity: 0.8 }}>
@@ -154,7 +150,7 @@ export default function LiveTrackPage() {
           <div className="tiqra-card flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h3 className="text-body font-semibold text-text-primary">Demand Signal Trend</h3>
-              <TrendingUp size={20} className="text-[#16A34A]" />
+              <HugeiconsIcon icon={ChartIncreaseIcon} size={20} className="text-[#16A34A]"  />
             </div>
             <div className="flex items-end gap-1.5 h-24">
               {DEMAND_DATA.map((val, i) => (
@@ -211,7 +207,7 @@ export default function LiveTrackPage() {
                   >
                     {resp.quality}% quality
                   </span>
-                  <ArrowUpRight size={16} className="text-text-secondary" />
+                  <HugeiconsIcon icon={ArrowUpRight01Icon} size={16} className="text-text-secondary"  />
                 </div>
               </div>
             ))}

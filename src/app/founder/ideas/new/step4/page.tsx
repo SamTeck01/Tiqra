@@ -1,12 +1,12 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSurveyStore } from "@/store/survey.store";
 import { useAuthStore } from "@/store/auth.store";
 import StepIndicator from "@/components/survey/StepIndicator";
 import TopBar from "@/components/layout/TopBar";
-import { ArrowRight, ArrowLeft, Info, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowRight01Icon, ArrowLeft01Icon, InformationCircleIcon, Loading02Icon, CheckmarkCircle01Icon } from "@hugeicons/core-free-icons";
 import { formatNairaShort, calculateSurveyCost } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -86,9 +86,9 @@ export default function NewIdeaStep4() {
               <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-brand-primary tiqra-spinner" />
               <div className="absolute inset-0 flex items-center justify-center">
                 {processing === "done" ? (
-                  <CheckCircle2 size={48} className="text-brand-primary" />
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-brand-primary"  />
                 ) : (
-                  <Loader2 size={48} className="text-brand-primary animate-spin" />
+                  <HugeiconsIcon icon={Loading02Icon} size={48} className="text-brand-primary animate-spin"  />
                 )}
               </div>
             </div>
@@ -108,8 +108,8 @@ export default function NewIdeaStep4() {
                 return (
                   <div key={step} className="process-step">
                     <div className="flex items-center gap-4 w-[200px]">
-                      {isDone && <CheckCircle2 size={20} className="text-brand-primary" />}
-                      {isActive && <Loader2 size={20} className="text-brand-primary animate-spin" />}
+                      {isDone && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={20} className="text-brand-primary"  />}
+                      {isActive && <HugeiconsIcon icon={Loading02Icon} size={20} className="text-brand-primary animate-spin"  />}
                       {!isDone && !isActive && <div className="w-5 h-5 rounded-full border-2 border-[#E5E7EB]" />}
                       <span className={cn("text-[24px]", isDone || isActive ? "text-text-primary" : "text-text-secondary")}>
                         {stepLabels[step]}
@@ -130,7 +130,7 @@ export default function NewIdeaStep4() {
             </div>
 
             <div className="flex items-center gap-3 bg-[#EDE9FE] rounded-xl px-5 py-4 w-full max-w-[610px]">
-              <Info size={20} className="text-brand-primary flex-shrink-0" />
+              <HugeiconsIcon icon={InformationCircleIcon} size={20} className="text-brand-primary flex-shrink-0"  />
               <p className="text-lg text-brand-primary font-semibold">Do not close this window</p>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function NewIdeaStep4() {
           {/* Escrow notice */}
           <div className="flex items-start gap-3 bg-[#EDE9FE] rounded-xl px-5 py-4">
             <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center flex-shrink-0 mt-0.5">
-              <Info size={16} className="text-white" />
+              <HugeiconsIcon icon={InformationCircleIcon} size={16} className="text-white"  />
             </div>
             <p className="text-lg text-text-primary">
               Funds are held in ESCROW until validation completion. Released per verified responses only.
@@ -219,12 +219,12 @@ export default function NewIdeaStep4() {
             onClick={() => { router.push("/founder/ideas/new/step3"); }}
             className="btn-secondary"
           >
-            <ArrowLeft size={20} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
             Back
           </button>
           <button onClick={handleProceedToPay} className="btn-primary">
             Proceed to pay {formatNairaShort(total)}
-            <ArrowRight size={20} />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
           </button>
         </div>
       </div>

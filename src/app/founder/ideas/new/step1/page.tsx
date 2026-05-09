@@ -1,10 +1,10 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
 import { useSurveyStore } from "@/store/survey.store";
 import StepIndicator from "@/components/survey/StepIndicator";
 import TopBar from "@/components/layout/TopBar";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowRight01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 
 export default function NewIdeaStep1() {
   const router = useRouter();
@@ -87,7 +87,7 @@ export default function NewIdeaStep1() {
             onClick={() => router.push("/founder/ideas")}
             className="btn-secondary"
           >
-            <ArrowLeft size={20} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
             Back
           </button>
           <button
@@ -96,7 +96,7 @@ export default function NewIdeaStep1() {
             className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Generate Questions with AI
-            <ArrowRight size={20} />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
           </button>
         </div>
       </div>

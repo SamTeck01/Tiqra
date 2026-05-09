@@ -1,8 +1,8 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ChevronRight } from "lucide-react";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 const SLIDES = [
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
         <div className="w-full flex flex-col gap-3">
           <button onClick={next} className="btn-primary w-full justify-center text-lg py-4">
             {isLast ? "Get Started" : "Next"}
-            <ArrowRight size={22} />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={22}  />
           </button>
           {isLast && (
             <button

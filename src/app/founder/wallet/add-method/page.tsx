@@ -1,12 +1,9 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft, ArrowRight, AlertCircle, CheckCircle2, XCircle,
-  CreditCard, Loader2, Building2, Eye, EyeOff
-} from "lucide-react";
+import { ArrowLeft01Icon, ArrowRight01Icon, AlertCircleIcon, CheckmarkCircle01Icon, CancelCircleIcon, CreditCardIcon, Loading02Icon, Building04Icon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 type Step = "method" | "card-details" | "bank-details" | "otp" | "success" | "processing";
@@ -76,7 +73,7 @@ export default function AddPaymentMethodPage() {
           <div className="relative w-24 h-24">
             <div className="w-24 h-24 rounded-full border-4 border-[#EDE9FE] border-t-brand-primary animate-spin" />
             <div className="absolute inset-0 flex items-center justify-center">
-              {method === "card" ? <CreditCard size={32} className="text-brand-primary" /> : <Building2 size={32} className="text-brand-primary" />}
+              {method === "card" ? <HugeiconsIcon icon={CreditCardIcon} size={32} className="text-brand-primary"  /> : <HugeiconsIcon icon={Building04Icon} size={32} className="text-brand-primary"  />}
             </div>
           </div>
           <div className="text-center">
@@ -94,7 +91,7 @@ export default function AddPaymentMethodPage() {
       <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
         <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
           <div className="w-28 h-28 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-            <CheckCircle2 size={56} className="text-[#16A34A]" />
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={56} className="text-[#16A34A]"  />
           </div>
           <div>
             <h1 className="text-[32px] font-bold text-text-primary">Payment Method Added!</h1>
@@ -104,7 +101,7 @@ export default function AddPaymentMethodPage() {
           </div>
           <div className="w-full bg-[#EDE9FE] rounded-2xl p-5 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-brand-primary flex items-center justify-center">
-              {method === "card" ? <CreditCard size={24} className="text-white" /> : <Building2 size={24} className="text-white" />}
+              {method === "card" ? <HugeiconsIcon icon={CreditCardIcon} size={24} className="text-white"  /> : <HugeiconsIcon icon={Building04Icon} size={24} className="text-white"  />}
             </div>
             <div className="text-left">
               <p className="text-body font-semibold text-text-primary">
@@ -139,7 +136,7 @@ export default function AddPaymentMethodPage() {
           }}
           className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
         >
-          <ArrowLeft size={20} /> Back
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  /> Back
         </button>
         <h1 className="text-[24px] font-semibold text-text-primary">Add Payment Method</h1>
       </div>
@@ -160,13 +157,13 @@ export default function AddPaymentMethodPage() {
                 className="flex items-center gap-5 p-6 bg-white border-2 border-[#E5E7EB] rounded-2xl hover:border-brand-primary transition-all text-left group"
               >
                 <div className="w-14 h-14 rounded-xl bg-[#EDE9FE] flex items-center justify-center flex-shrink-0 group-hover:bg-brand-primary transition-colors">
-                  <CreditCard size={28} className="text-brand-primary group-hover:text-white transition-colors" />
+                  <HugeiconsIcon icon={CreditCardIcon} size={28} className="text-brand-primary group-hover:text-white transition-colors"  />
                 </div>
                 <div className="flex-1">
                   <p className="text-body font-semibold text-text-primary">Debit / Credit Card</p>
                   <p className="text-sm text-text-secondary mt-0.5">Visa, Mastercard, Verve – instant funding</p>
                 </div>
-                <ArrowRight size={20} className="text-text-secondary" />
+                <HugeiconsIcon icon={ArrowRight01Icon} size={20} className="text-text-secondary"  />
               </button>
 
               <button
@@ -174,18 +171,18 @@ export default function AddPaymentMethodPage() {
                 className="flex items-center gap-5 p-6 bg-white border-2 border-[#E5E7EB] rounded-2xl hover:border-brand-primary transition-all text-left group"
               >
                 <div className="w-14 h-14 rounded-xl bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 group-hover:bg-brand-primary transition-colors">
-                  <Building2 size={28} className="text-[#16A34A] group-hover:text-white transition-colors" />
+                  <HugeiconsIcon icon={Building04Icon} size={28} className="text-[#16A34A] group-hover:text-white transition-colors"  />
                 </div>
                 <div className="flex-1">
                   <p className="text-body font-semibold text-text-primary">Bank Transfer</p>
                   <p className="text-sm text-text-secondary mt-0.5">Link your Nigerian bank account</p>
                 </div>
-                <ArrowRight size={20} className="text-text-secondary" />
+                <HugeiconsIcon icon={ArrowRight01Icon} size={20} className="text-text-secondary"  />
               </button>
             </div>
 
             <div className="flex items-start gap-3 p-4 bg-[#F8F9FC] rounded-xl">
-              <AlertCircle size={16} className="text-text-secondary flex-shrink-0 mt-0.5" />
+              <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-text-secondary flex-shrink-0 mt-0.5"  />
               <p className="text-sm text-text-secondary">
                 All payment data is encrypted and secured. Tiqra never stores your full card details.
               </p>
@@ -206,7 +203,7 @@ export default function AddPaymentMethodPage() {
               style={{ background: "linear-gradient(135deg, #9F4EF5 0%, #7C3AED 100%)" }}>
               <div className="flex justify-between items-start">
                 <span className="text-white/70 text-sm font-medium">TIQRA WALLET</span>
-                <CreditCard size={24} className="text-white/70" />
+                <HugeiconsIcon icon={CreditCardIcon} size={24} className="text-white/70"  />
               </div>
               <div>
                 <p className="text-[22px] font-mono tracking-widest">
@@ -264,7 +261,7 @@ export default function AddPaymentMethodPage() {
                       onClick={() => setShowCvv(!showCvv)}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary"
                     >
-                      {showCvv ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showCvv ? <HugeiconsIcon icon={ViewOffIcon} size={18}  /> : <HugeiconsIcon icon={ViewIcon} size={18}  />}
                     </button>
                   </div>
                 </div>
@@ -286,7 +283,7 @@ export default function AddPaymentMethodPage() {
               disabled={!cardForm.number || !cardForm.expiry || !cardForm.cvv || !cardForm.name}
               className="btn-primary w-full justify-center disabled:opacity-40"
             >
-              Continue <ArrowRight size={20} />
+              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           </div>
         )}
@@ -331,13 +328,13 @@ export default function AddPaymentMethodPage() {
 
               {resolving && (
                 <div className="flex items-center gap-3 p-4 bg-[#F8F9FC] rounded-xl">
-                  <Loader2 size={18} className="text-brand-primary animate-spin" />
+                  <HugeiconsIcon icon={Loading02Icon} size={18} className="text-brand-primary animate-spin"  />
                   <span className="text-body text-text-secondary">Verifying account...</span>
                 </div>
               )}
               {bankForm.accountName && !resolving && (
                 <div className="flex items-center gap-3 p-4 bg-[#DCFCE7] rounded-xl">
-                  <CheckCircle2 size={18} className="text-[#16A34A]" />
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} size={18} className="text-[#16A34A]"  />
                   <div>
                     <p className="text-body font-semibold text-text-primary">{bankForm.accountName}</p>
                     <p className="text-sm text-text-secondary">{bankForm.bank}</p>
@@ -363,7 +360,7 @@ export default function AddPaymentMethodPage() {
               disabled={!bankForm.bank || !bankForm.accountName || bankForm.bvn.length !== 11}
               className="btn-primary w-full justify-center disabled:opacity-40"
             >
-              Continue <ArrowRight size={20} />
+              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           </div>
         )}

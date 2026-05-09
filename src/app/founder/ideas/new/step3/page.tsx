@@ -1,11 +1,11 @@
 "use client";
-
-import { useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSurveyStore } from "@/store/survey.store";
 import StepIndicator from "@/components/survey/StepIndicator";
 import TopBar from "@/components/layout/TopBar";
-import { ArrowRight, ArrowLeft, Pencil, Check, X, Eye, Shield } from "lucide-react";
+import { ArrowRight01Icon, ArrowLeft01Icon, Edit02Icon, CheckmarkCircle01Icon, Cancel01Icon, ViewIcon, SecurityIcon } from "@hugeicons/core-free-icons";
 import { Question } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,7 @@ function QuestionCard({
           </span>
           {question.isHoneypot && (
             <span className="flex items-center gap-1 text-sm text-brand-primary bg-[#EDE9FE] px-2 py-0.5 rounded-md">
-              <Shield size={12} />
+              <HugeiconsIcon icon={SecurityIcon} size={12}  />
               Truth Layer
             </span>
           )}
@@ -90,13 +90,13 @@ function QuestionCard({
               onClick={() => { onEdit(question.id, text); setEditing(false); }}
               className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center hover:bg-brand-secondary transition-colors"
             >
-              <Check size={14} className="text-white" />
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} className="text-white"  />
             </button>
             <button
               onClick={() => { setText(question.text); setEditing(false); }}
               className="w-8 h-8 rounded-lg bg-[#F8F9FC] border border-[#E5E7EB] flex items-center justify-center"
             >
-              <X size={14} className="text-text-secondary" />
+              <HugeiconsIcon icon={Cancel01Icon} size={14} className="text-text-secondary"  />
             </button>
           </>
         ) : (
@@ -104,7 +104,7 @@ function QuestionCard({
             onClick={() => setEditing(true)}
             className="btn-ghost py-1.5 px-3 text-sm"
           >
-            <Pencil size={14} />
+            <HugeiconsIcon icon={Edit02Icon} size={14}  />
             Edit
           </button>
         )}
@@ -129,8 +129,13 @@ export default function NewIdeaStep3() {
     router.push("/founder/ideas/new/step4");
   };
 
+  useEffect(() => {
+    if (!draft.questions.length) {
+      router.push("/founder/ideas/new/step1");
+    }
+  }, [draft.questions.length, router]);
+
   if (!draft.questions.length) {
-    router.push("/founder/ideas/new/step1");
     return null;
   }
 
@@ -157,7 +162,7 @@ export default function NewIdeaStep3() {
             </p>
           </div>
           <div className="flex items-center gap-2 bg-[#EDE9FE] px-4 py-2 rounded-xl">
-            <Eye size={16} className="text-brand-primary" />
+            <HugeiconsIcon icon={ViewIcon} size={16} className="text-brand-primary"  />
             <span className="text-body text-brand-primary font-medium">
               Preview mode
             </span>
@@ -183,12 +188,12 @@ export default function NewIdeaStep3() {
             onClick={() => { setDraftStep(1); router.push("/founder/ideas/new/step1"); }}
             className="btn-secondary"
           >
-            <ArrowLeft size={20} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
             Back
           </button>
           <button onClick={handleNext} className="btn-primary">
             Setup Validation
-            <ArrowRight size={20} />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
           </button>
         </div>
       </div>

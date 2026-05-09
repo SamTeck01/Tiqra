@@ -1,11 +1,8 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft, CheckCircle2, RotateCcw, XCircle, TrendingUp,
-  Users, AlertTriangle, Target, ArrowRight, Download
-} from "lucide-react";
+import { ArrowLeft01Icon, CheckmarkCircle01Icon, RotateLeft01Icon, CancelCircleIcon, ChartIncreaseIcon, UserGroupIcon, Alert02Icon, Target01Icon, ArrowRight01Icon, Download01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 type Verdict = "proceed" | "pivot" | "kill";
@@ -67,7 +64,7 @@ const VERDICT_CONFIG = {
     color: "#16A34A",
     bg: "#DCFCE7",
     border: "#16A34A",
-    icon: CheckCircle2,
+    icon: CheckmarkCircle01Icon,
     badge: "GO",
   },
   pivot: {
@@ -76,7 +73,7 @@ const VERDICT_CONFIG = {
     color: "#D97706",
     bg: "#FEF3C7",
     border: "#D97706",
-    icon: RotateCcw,
+    icon: RotateLeft01Icon,
     badge: "PIVOT",
   },
   kill: {
@@ -85,7 +82,7 @@ const VERDICT_CONFIG = {
     color: "#DC2626",
     bg: "#FEE2E2",
     border: "#DC2626",
-    icon: XCircle,
+    icon: CancelCircleIcon,
     badge: "KILL",
   },
 };
@@ -107,7 +104,7 @@ export default function SurveyReportPage() {
             onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
           >
-            <ArrowLeft size={20} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
           </button>
           <div>
             <h1 className="text-[24px] font-semibold text-text-primary">AI Validation Report</h1>
@@ -115,7 +112,7 @@ export default function SurveyReportPage() {
           </div>
         </div>
         <button className="btn-secondary gap-2">
-          <Download size={18} /> Export PDF
+          <HugeiconsIcon icon={Download01Icon} size={18}  /> Export PDF
         </button>
       </div>
 
@@ -129,7 +126,7 @@ export default function SurveyReportPage() {
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium opacity-70" style={{ color: vc.color }}>AI Verdict</p>
             <div className="flex items-center gap-4">
-              <Icon size={48} style={{ color: vc.color }} />
+              <HugeiconsIcon icon={Icon} size={48} style={{ color: vc.color }} />
               <div>
                 <p className="text-[40px] font-bold leading-none" style={{ color: vc.color }}>
                   {vc.label}
@@ -153,7 +150,7 @@ export default function SurveyReportPage() {
           <div className="tiqra-card flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-body text-text-secondary">Demand Signal</p>
-              <TrendingUp size={18} style={{ color: vc.color }} />
+              <HugeiconsIcon icon={ChartIncreaseIcon} size={18} style={{ color: vc.color }}  />
             </div>
             <span className="text-[40px] font-bold text-text-primary">{report.demandSignal}%</span>
             <div>
@@ -172,7 +169,7 @@ export default function SurveyReportPage() {
           <div className="tiqra-card flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <p className="text-body text-text-secondary">Confidence Ceiling</p>
-              <Target size={18} className="text-brand-primary" />
+              <HugeiconsIcon icon={Target01Icon} size={18} className="text-brand-primary"  />
             </div>
             <span className="text-[40px] font-bold text-text-primary">{report.confidenceCeiling}%</span>
             <div>
@@ -201,7 +198,7 @@ export default function SurveyReportPage() {
         {/* Audience Insights */}
         <div className="tiqra-card flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Users size={18} className="text-brand-primary" />
+            <HugeiconsIcon icon={UserGroupIcon} size={18} className="text-brand-primary"  />
             <p className="text-body font-semibold text-text-primary">Audience Insights</p>
           </div>
           <p className="text-body text-text-secondary leading-relaxed">{report.audienceInsights}</p>
@@ -221,7 +218,7 @@ export default function SurveyReportPage() {
               <div className="flex flex-col gap-2">
                 {report.topStrengths.map((s, i) => (
                   <div key={i} className="flex items-center gap-2 p-3 bg-[#DCFCE7] rounded-xl">
-                    <CheckCircle2 size={14} className="text-[#16A34A] flex-shrink-0" />
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} size={14} className="text-[#16A34A] flex-shrink-0"  />
                     <span className="text-sm text-[#16A34A]">{s}</span>
                   </div>
                 ))}
@@ -234,7 +231,7 @@ export default function SurveyReportPage() {
             <div className="flex flex-col gap-2">
               {report.topObjections.map((obj, i) => (
                 <div key={i} className="flex items-center gap-2 p-3 bg-[#FEF3C7] rounded-xl">
-                  <AlertTriangle size={14} className="text-[#D97706] flex-shrink-0" />
+                  <HugeiconsIcon icon={Alert02Icon} size={14} className="text-[#D97706] flex-shrink-0"  />
                   <span className="text-sm text-[#D97706]">{obj}</span>
                 </div>
               ))}
@@ -245,22 +242,22 @@ export default function SurveyReportPage() {
         {/* CTA */}
         <div className="flex gap-4">
           <button onClick={() => router.back()} className="btn-secondary flex-shrink-0">
-            <ArrowLeft size={18} /> Back to Idea
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back to Idea
           </button>
           {report.verdict === "proceed" && (
             <Link href="/founder/ideas/new" className="btn-primary flex-1 justify-center">
-              Launch Next Idea <ArrowRight size={20} />
+              Launch Next Idea <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </Link>
           )}
           {report.verdict === "pivot" && (
             <Link href="/founder/ideas/new" className="btn-primary flex-1 justify-center"
               style={{ backgroundColor: "#D97706" }}>
-              Pivot & Re-validate <ArrowRight size={20} />
+              Pivot & Re-validate <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </Link>
           )}
           {report.verdict === "kill" && (
             <Link href="/founder/dashboard" className="btn-secondary flex-1 justify-center">
-              Back to Dashboard <ArrowRight size={20} />
+              Back to Dashboard <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </Link>
           )}
         </div>

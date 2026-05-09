@@ -1,11 +1,8 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  ArrowLeft, ArrowRight, Clock, Users, DollarSign,
-  ChevronRight, CheckCircle2, AlertCircle
-} from "lucide-react";
+import { ArrowLeft01Icon, ArrowRight01Icon, Clock01Icon, UserGroupIcon, Dollar01Icon, CheckmarkCircle01Icon, AlertCircleIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 const SURVEY_DATA: Record<string, {
@@ -79,7 +76,7 @@ export default function SurveyDetailPage() {
             onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
           >
-            <ArrowLeft size={20} /> Back to surveys
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  /> Back to surveys
           </button>
         </div>
 
@@ -103,13 +100,13 @@ export default function SurveyDetailPage() {
           {/* Survey info cards */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             {[
-              { icon: Clock, label: "Duration", value: survey.duration },
-              { icon: Users, label: "Questions", value: `${totalQ} questions` },
-              { icon: DollarSign, label: "Pay type", value: "Instant payout" },
+              { icon: Clock01Icon, label: "Duration", value: survey.duration },
+              { icon: UserGroupIcon, label: "Questions", value: `${totalQ} questions` },
+              { icon: Dollar01Icon, label: "Pay type", value: "Instant payout" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="bg-[#F8F9FC] rounded-2xl p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#EDE9FE] flex items-center justify-center flex-shrink-0">
-                  <Icon size={20} className="text-brand-primary" />
+                  <HugeiconsIcon icon={Icon} size={20} className="text-brand-primary" />
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">{label}</p>
@@ -152,13 +149,13 @@ export default function SurveyDetailPage() {
               onClick={() => setPhase("taking")}
               className="btn-primary flex-1 justify-center text-lg"
             >
-              Start Survey <ArrowRight size={20} />
+              Start Survey <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           </div>
 
           {/* Disclaimer */}
           <div className="flex items-start gap-2 mt-4 p-4 bg-[#FEF3C7] rounded-xl">
-            <AlertCircle size={16} className="text-[#D97706] flex-shrink-0 mt-0.5" />
+            <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-[#D97706] flex-shrink-0 mt-0.5"  />
             <p className="text-sm text-[#D97706]">
               Answer honestly. Our AI truth-layer detects low-quality responses. Flagged submissions will not be paid.
             </p>
@@ -179,7 +176,7 @@ export default function SurveyDetailPage() {
               onClick={() => currentQ === 0 ? setPhase("preview") : setCurrentQ((q) => q - 1)}
               className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
             >
-              <ArrowLeft size={18} />
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  />
               {currentQ === 0 ? "Back" : "Previous"}
             </button>
             <span className="text-sm text-text-secondary font-medium">
@@ -316,7 +313,7 @@ export default function SurveyDetailPage() {
             className="btn-primary w-full justify-center text-lg disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isLast ? "Submit Survey" : "Next Question"}
-            <ArrowRight size={20} />
+            <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
           </button>
         </div>
       </div>
@@ -328,7 +325,7 @@ export default function SurveyDetailPage() {
     <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8 py-16">
       <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
         <div className="w-28 h-28 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-          <CheckCircle2 size={56} className="text-[#16A34A]" />
+          <HugeiconsIcon icon={CheckmarkCircle01Icon} size={56} className="text-[#16A34A]"  />
         </div>
         <div>
           <h1 className="text-[32px] font-bold text-text-primary">Survey Submitted!</h1>
@@ -351,7 +348,7 @@ export default function SurveyDetailPage() {
             onClick={() => router.push("/earner/surveys")}
             className="btn-primary w-full justify-center"
           >
-            Find More Surveys <ArrowRight size={20} />
+            Find More Surveys <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
           </button>
           <button
             onClick={() => router.push("/earner/wallet")}

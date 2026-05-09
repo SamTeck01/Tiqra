@@ -1,12 +1,9 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft, ArrowRight, AlertCircle, CheckCircle2, XCircle,
-  Plus, Loader2, CreditCard
-} from "lucide-react";
+import { ArrowLeft01Icon, ArrowRight01Icon, AlertCircleIcon, CheckmarkCircle01Icon, CancelCircleIcon, Add01Icon, Loading02Icon, CreditCardIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 type Step = "amount" | "method" | "processing" | "success" | "failed";
@@ -36,7 +33,7 @@ export default function FounderFundWalletPage() {
           <div className="relative w-24 h-24">
             <div className="w-24 h-24 rounded-full border-4 border-[#EDE9FE] border-t-brand-primary animate-spin" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <CreditCard size={32} className="text-brand-primary" />
+              <HugeiconsIcon icon={CreditCardIcon} size={32} className="text-brand-primary"  />
             </div>
           </div>
           <div className="text-center">
@@ -65,7 +62,7 @@ export default function FounderFundWalletPage() {
       <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
         <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
           <div className="w-28 h-28 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-            <CheckCircle2 size={56} className="text-[#16A34A]" />
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={56} className="text-[#16A34A]"  />
           </div>
           <div>
             <h1 className="text-[32px] font-bold text-text-primary">Payment Successful!</h1>
@@ -107,7 +104,7 @@ export default function FounderFundWalletPage() {
       <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
         <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
           <div className="w-28 h-28 rounded-full bg-[#FEE2E2] flex items-center justify-center">
-            <XCircle size={56} className="text-[#DC2626]" />
+            <HugeiconsIcon icon={CancelCircleIcon} size={56} className="text-[#DC2626]"  />
           </div>
           <div>
             <h1 className="text-[32px] font-bold text-text-primary">Payment Failed</h1>
@@ -117,7 +114,7 @@ export default function FounderFundWalletPage() {
           </div>
 
           <div className="w-full flex items-start gap-3 p-4 bg-[#FEE2E2] rounded-xl text-left">
-            <AlertCircle size={16} className="text-[#DC2626] flex-shrink-0 mt-0.5" />
+            <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-[#DC2626] flex-shrink-0 mt-0.5"  />
             <p className="text-sm text-[#DC2626]">
               This may be due to insufficient funds, incorrect card details, or a network issue. Please check and try again.
             </p>
@@ -144,7 +141,7 @@ export default function FounderFundWalletPage() {
           onClick={() => step === "amount" ? router.back() : setStep("amount")}
           className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
         >
-          <ArrowLeft size={20} /> Back
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  /> Back
         </button>
         <h1 className="text-[24px] font-semibold text-text-primary">Fund Wallet</h1>
       </div>
@@ -193,7 +190,7 @@ export default function FounderFundWalletPage() {
               disabled={!canContinue}
               className="btn-primary w-full justify-center disabled:opacity-40"
             >
-              Continue <ArrowRight size={20} />
+              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           </div>
         )}
@@ -208,8 +205,8 @@ export default function FounderFundWalletPage() {
 
             <div className="flex flex-col gap-4">
               {[
-                { key: "card" as const, label: "Debit / Credit Card", sub: "Instant – Visa, Mastercard, Verve", icon: CreditCard, color: "#EDE9FE", iconColor: "text-brand-primary" },
-                { key: "transfer" as const, label: "Bank Transfer", sub: "Pay via USSD or internet banking", icon: Plus, color: "#DCFCE7", iconColor: "text-[#16A34A]" },
+                { key: "card" as const, label: "Debit / Credit Card", sub: "Instant – Visa, Mastercard, Verve", icon: CreditCardIcon, color: "#EDE9FE", iconColor: "text-brand-primary" },
+                { key: "transfer" as const, label: "Bank Transfer", sub: "Pay via USSD or internet banking", icon: Add01Icon, color: "#DCFCE7", iconColor: "text-[#16A34A]" },
               ].map(({ key, label, sub, icon: Icon, color, iconColor }) => (
                 <button
                   key={key}
@@ -220,7 +217,7 @@ export default function FounderFundWalletPage() {
                   )}
                 >
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color }}>
-                    <Icon size={24} className={iconColor} />
+                    <HugeiconsIcon icon={Icon} size={24} className={iconColor} />
                   </div>
                   <div className="flex-1">
                     <p className="text-body font-semibold text-text-primary">{label}</p>

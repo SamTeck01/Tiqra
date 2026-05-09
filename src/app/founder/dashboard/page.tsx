@@ -248,7 +248,7 @@ export default function FounderDashboard() {
               <div className="flex flex-col gap-3">
                 {[
                   "Write a specific problem statement for 40% better responses",
-                  "Target 50+ respondents for statistically reliable results",
+                  "Target01Icon 50+ respondents for statistically reliable results",
                   "Higher payout = faster, higher quality responses",
                 ].map((tip, i) => (
                   <div key={i} className="flex items-start gap-2">

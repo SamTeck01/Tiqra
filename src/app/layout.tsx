@@ -18,12 +18,17 @@ export const metadata: Metadata = {
   description:
     "Validate your startup idea with real human feedback. Tiqra gives founders signal-based insights to Proceed, Pivot, or Kill – before investing a naira.",
   keywords: ["startup validation", "market research", "Nigeria", "founder tools"],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   openGraph: {
     title: "Tiqra – Truth-First Market Intelligence",
     description: "Validate your startup idea with verified human feedback.",
     type: "website",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({

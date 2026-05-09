@@ -1,11 +1,11 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSurveyStore } from "@/store/survey.store";
 import StepIndicator from "@/components/survey/StepIndicator";
 import TopBar from "@/components/layout/TopBar";
-import { Loader2, CheckCircle2, Sparkles } from "lucide-react";
+import { Loading02Icon, CheckmarkCircle01Icon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { Question } from "@/lib/types";
 import { ID } from "appwrite";
 
@@ -138,7 +138,7 @@ export default function NewIdeaStep2() {
               style={{ borderTopColor: "#9F4EF5" }}
             />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles size={48} className="text-brand-primary" />
+              <HugeiconsIcon icon={SparklesIcon} size={48} className="text-brand-primary"  />
             </div>
           </div>
 
@@ -167,8 +167,8 @@ export default function NewIdeaStep2() {
                     >
                       {step.label}
                     </span>
-                    {isDone && <CheckCircle2 size={20} className="text-brand-primary flex-shrink-0" />}
-                    {isActive && <Loader2 size={20} className="text-brand-primary animate-spin flex-shrink-0" />}
+                    {isDone && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={20} className="text-brand-primary flex-shrink-0"  />}
+                    {isActive && <HugeiconsIcon icon={Loading02Icon} size={20} className="text-brand-primary animate-spin flex-shrink-0"  />}
                   </div>
                   <div className="w-[320px] h-3 rounded-full overflow-hidden bg-[#EDE9FE]">
                     <div
@@ -187,7 +187,7 @@ export default function NewIdeaStep2() {
           {/* Warning */}
           <div className="flex items-center gap-3 bg-[#EDE9FE] rounded-xl px-5 py-4 w-full max-w-[610px]">
             <div className="w-8 h-8 rounded-lg bg-brand-primary flex items-center justify-center flex-shrink-0">
-              <Sparkles size={16} className="text-white" />
+              <HugeiconsIcon icon={SparklesIcon} size={16} className="text-white"  />
             </div>
             <p className="text-lg text-text-primary">
               Do not close this window while we generate your questions

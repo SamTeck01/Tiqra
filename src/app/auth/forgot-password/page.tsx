@@ -1,8 +1,8 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Loader2, Check, Mail } from "lucide-react";
+import { ArrowLeft01Icon, ArrowRight01Icon, Loading02Icon, CheckmarkCircle01Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
           href="/auth/login"
           className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary mb-8 transition-colors"
         >
-          <ArrowLeft size={18} /> Back to login
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back to login
         </Link>
 
         {!sent ? (
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
                     className="tiqra-input pl-11"
                     required
                   />
-                  <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+                  <HugeiconsIcon icon={Mail01Icon} size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"  />
                 </div>
               </div>
 
@@ -79,9 +79,9 @@ export default function ForgotPasswordPage() {
                 className="btn-primary w-full justify-center disabled:opacity-40"
               >
                 {loading ? (
-                  <Loader2 size={20} className="animate-spin" />
+                  <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  />
                 ) : (
-                  <>Send Reset Link <ArrowRight size={20} /></>
+                  <>Send Reset Link <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>
                 )}
               </button>
             </form>
@@ -89,10 +89,10 @@ export default function ForgotPasswordPage() {
         ) : (
           <div className="flex flex-col items-center gap-6 py-8">
             <div className="w-24 h-24 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-              <Check size={48} className="text-[#16A34A]" />
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]"  />
             </div>
             <div className="text-center">
-              <h2 className="text-[32px] font-semibold text-text-primary">Check your email</h2>
+              <h2 className="text-[32px] font-semibold text-text-primary">CheckmarkCircle01Icon your email</h2>
               <p className="text-lg text-text-secondary mt-2">
                 We sent a password reset link to<br />
                 <strong className="text-text-primary">{email}</strong>

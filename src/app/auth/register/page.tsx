@@ -1,10 +1,10 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
-import { Eye, EyeOff, ArrowRight, Loader2, Check, ChevronLeft } from "lucide-react";
+import { ViewIcon, ViewOffIcon, ArrowRight01Icon, Loading02Icon, CheckmarkCircle01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 type Role = "founder" | "earner";
@@ -117,7 +117,7 @@ export default function RegisterPage() {
                     )}
                   >
                     {isDone ? (
-                      <Check size={24} className="text-white" />
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={24} className="text-white"  />
                     ) : (
                       <span
                         className={cn(
@@ -266,7 +266,7 @@ export default function RegisterPage() {
               </button>
             </div>
 
-            {/* Info box */}
+            {/* InformationCircleIcon box */}
             {form.role && (
               <div className="flex items-start gap-3 bg-[#F8F9FC] rounded-xl p-4">
                 <div className="w-3 h-3 rounded-full bg-brand-primary mt-1 flex-shrink-0" />
@@ -284,7 +284,7 @@ export default function RegisterPage() {
                 disabled={!form.role}
                 className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Continue <ArrowRight size={20} />
+                Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
               </button>
               <button className="btn-secondary w-full justify-center gap-3">
                 <svg width="20" height="20" viewBox="0 0 20 20">
@@ -309,7 +309,7 @@ export default function RegisterPage() {
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-3 mb-2">
               <button onClick={back} className="p-2 rounded-lg hover:bg-[#F8F9FC] transition-colors">
-                <ChevronLeft size={24} className="text-text-secondary" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} size={24} className="text-text-secondary"  />
               </button>
               <div>
                 <h2 className="text-[24px] font-semibold text-text-primary">Your Details</h2>
@@ -406,7 +406,7 @@ export default function RegisterPage() {
               disabled={!form.name || !form.email}
               className="btn-primary w-full justify-center mt-2 disabled:opacity-40"
             >
-              Continue <ArrowRight size={20} />
+              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           </div>
         )}
@@ -416,7 +416,7 @@ export default function RegisterPage() {
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-3 mb-2">
               <button onClick={back} className="p-2 rounded-lg hover:bg-[#F8F9FC] transition-colors">
-                <ChevronLeft size={24} className="text-text-secondary" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} size={24} className="text-text-secondary"  />
               </button>
               <div>
                 <h2 className="text-[24px] font-semibold text-text-primary">Create Password</h2>
@@ -439,7 +439,7 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <HugeiconsIcon icon={ViewOffIcon} size={20}  /> : <HugeiconsIcon icon={ViewIcon} size={20}  />}
                 </button>
               </div>
             </div>
@@ -458,7 +458,7 @@ export default function RegisterPage() {
                   onClick={() => setShowConfirm(!showConfirm)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary"
                 >
-                  {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showConfirm ? <HugeiconsIcon icon={ViewOffIcon} size={20}  /> : <HugeiconsIcon icon={ViewIcon} size={20}  />}
                 </button>
               </div>
               {form.confirmPassword && form.password !== form.confirmPassword && (
@@ -480,7 +480,7 @@ export default function RegisterPage() {
                       ok ? "bg-[#16A34A]" : "bg-[#E5E7EB]"
                     )}
                   >
-                    {ok && <Check size={10} className="text-white" />}
+                    {ok && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={10} className="text-white"  />}
                   </div>
                   <span className={ok ? "text-[#16A34A]" : "text-text-secondary"}>{label}</span>
                 </div>
@@ -496,7 +496,7 @@ export default function RegisterPage() {
               }
               className="btn-primary w-full justify-center mt-2 disabled:opacity-40"
             >
-              {loading ? <Loader2 size={20} className="animate-spin" /> : <>Create Account <ArrowRight size={20} /></>}
+              {loading ? <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  /> : <>Create Account <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>}
             </button>
           </div>
         )}
@@ -505,12 +505,12 @@ export default function RegisterPage() {
         {step === 4 && (
           <div className="flex flex-col items-center gap-6 py-8">
             <div className="w-24 h-24 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-              <Check size={48} className="text-[#16A34A]" />
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]"  />
             </div>
             <div className="text-center">
               <h2 className="text-[32px] font-semibold text-text-primary">Account Created!</h2>
               <p className="text-lg text-text-secondary mt-2">
-                Welcome to Tiqra. Check your email to verify your account.
+                Welcome to Tiqra. CheckmarkCircle01Icon your email to verify your account.
               </p>
             </div>
             <button
@@ -519,7 +519,7 @@ export default function RegisterPage() {
               }
               className="btn-primary w-full justify-center"
             >
-              Go to Dashboard <ArrowRight size={20} />
+              Go to Dashboard <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           </div>
         )}

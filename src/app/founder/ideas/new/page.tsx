@@ -1,14 +1,11 @@
 "use client";
-
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { useSurveyStore } from "@/store/survey.store";
-import {
-  ArrowLeft, ArrowRight, Plus, Trash2, Loader2, Sparkles,
-  Check, Users, Clock, DollarSign, ChevronDown
-} from "lucide-react";
+import { ArrowLeft01Icon, ArrowRight01Icon, Add01Icon, Delete02Icon, Loading02Icon, SparklesIcon, CheckmarkCircle01Icon, UserGroupIcon, Clock01Icon, Dollar01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -66,7 +63,7 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
                 "bg-[#F8F9FC] border-[#F8F9FC] text-text-secondary"
               )}
             >
-              {isDone ? <Check size={20} /> : num}
+              {isDone ? <HugeiconsIcon icon={CheckmarkCircle01Icon} size={20}  /> : num}
             </div>
             {i < total - 1 && (
               <div className={cn("h-px w-16 transition-all", isDone ? "bg-brand-primary" : "bg-[#E5E7EB]")} />
@@ -196,7 +193,7 @@ export default function NewIdeaPage() {
           {!processingDone ? (
             <>
               <div className="w-24 h-24 rounded-full bg-[#EDE9FE] flex items-center justify-center mb-8">
-                <Loader2 size={48} className="text-brand-primary animate-spin" />
+                <HugeiconsIcon icon={Loading02Icon} size={48} className="text-brand-primary animate-spin"  />
               </div>
               <h1 className="text-[32px] font-semibold text-text-primary text-center mb-2">
                 Processing your idea...
@@ -208,7 +205,7 @@ export default function NewIdeaPage() {
           ) : (
             <>
               <div className="w-24 h-24 rounded-full bg-[#DCFCE7] flex items-center justify-center mb-8">
-                <Check size={48} className="text-[#16A34A]" />
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]"  />
               </div>
               <h1 className="text-[32px] font-semibold text-text-primary text-center mb-2">
                 Survey is Live!
@@ -253,7 +250,7 @@ export default function NewIdeaPage() {
 
           {processingDone && (
             <button onClick={goToDashboard} className="btn-primary px-12">
-              View My Ideas <ArrowRight size={20} />
+              View My Ideas <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
             </button>
           )}
         </div>
@@ -268,7 +265,7 @@ export default function NewIdeaPage() {
         {/* Back nav */}
         <div className="px-8 pt-8 pb-0">
           <Link href="/founder/ideas" className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors">
-            <ArrowLeft size={20} />
+            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
             Back to ideas
           </Link>
         </div>
@@ -294,7 +291,7 @@ export default function NewIdeaPage() {
                 placeholder={"Describe the pain your idea is solving, Be specific - People facing it in simple terms\nHow often and how badly"}
               />
               <TextAreaField
-                label="Who is this idea for? (Target Audience)"
+                label="Who is this idea for? (Target01Icon Audience)"
                 value={form.targetAudience}
                 onChange={(v) => up("targetAudience", v)}
                 placeholder="Be specific about who you're building this for (e.g students, small business owners, job seekers etc.)"
@@ -329,7 +326,7 @@ export default function NewIdeaPage() {
                 disabled={!form.problemStatement || !form.solution}
                 className="btn-primary w-full justify-center mt-4 disabled:opacity-40"
               >
-                Generate AI Questions <Sparkles size={20} />
+                Generate AI Questions <HugeiconsIcon icon={SparklesIcon} size={20}  />
               </button>
             </div>
           )}
@@ -342,7 +339,7 @@ export default function NewIdeaPage() {
                   AI generated {form.questions.length} questions. You can edit or add more.
                 </p>
                 <button className="btn-secondary gap-2">
-                  <Sparkles size={18} /> Regenerate
+                  <HugeiconsIcon icon={SparklesIcon} size={18}  /> Regenerate
                 </button>
               </div>
 
@@ -382,26 +379,26 @@ export default function NewIdeaPage() {
                       onClick={() => removeQuestion(q.id)}
                       className="text-text-muted hover:text-[#DC2626] transition-colors mt-0.5 flex-shrink-0"
                     >
-                      <Trash2 size={18} />
+                      <HugeiconsIcon icon={Delete02Icon} size={18}  />
                     </button>
                   </div>
                 ))}
               </div>
 
               <button onClick={addQuestion} className="btn-secondary gap-2">
-                <Plus size={18} /> Add Question
+                <HugeiconsIcon icon={Add01Icon} size={18}  /> Add Question
               </button>
 
               <div className="flex gap-4 mt-4">
                 <button onClick={() => setStep(1)} className="btn-secondary flex-1 justify-center">
-                  <ArrowLeft size={18} /> Back
+                  <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back
                 </button>
                 <button
                   onClick={() => setStep(3)}
                   disabled={form.questions.length === 0}
                   className="btn-primary flex-1 justify-center disabled:opacity-40"
                 >
-                  Next <ArrowRight size={20} />
+                  Next <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
                 </button>
               </div>
             </div>
@@ -424,7 +421,7 @@ export default function NewIdeaPage() {
                     <option>South Africa</option>
                     <option>Egypt</option>
                   </select>
-                  <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
+                  <HugeiconsIcon icon={ArrowDown01Icon} size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"  />
                 </div>
               </div>
 
@@ -491,10 +488,10 @@ export default function NewIdeaPage() {
 
               <div className="flex gap-4 mt-4">
                 <button onClick={() => setStep(2)} className="btn-secondary flex-1 justify-center">
-                  <ArrowLeft size={18} /> Back
+                  <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back
                 </button>
                 <button onClick={() => setStep(4)} className="btn-primary flex-1 justify-center">
-                  Next <ArrowRight size={20} />
+                  Next <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
                 </button>
               </div>
             </div>
@@ -550,22 +547,22 @@ export default function NewIdeaPage() {
               <div className="bg-white border border-[#F3F4F6] rounded-2xl p-5 flex flex-col gap-3">
                 <h3 className="text-body font-semibold text-text-primary">Survey Summary</h3>
                 <div className="flex gap-6 text-sm text-text-secondary">
-                  <span className="flex items-center gap-1"><Users size={14} /> {form.respondentsRequired} respondents</span>
-                  <span className="flex items-center gap-1"><Clock size={14} /> ~{form.questions.length * 1} mins est.</span>
-                  <span className="flex items-center gap-1"><DollarSign size={14} /> ₦{form.payoutPerResponse.toLocaleString()} each</span>
+                  <span className="flex items-center gap-1"><HugeiconsIcon icon={UserGroupIcon} size={14}  /> {form.respondentsRequired} respondents</span>
+                  <span className="flex items-center gap-1"><HugeiconsIcon icon={Clock01Icon} size={14}  /> ~{form.questions.length * 1} mins est.</span>
+                  <span className="flex items-center gap-1"><HugeiconsIcon icon={Dollar01Icon} size={14}  /> ₦{form.payoutPerResponse.toLocaleString()} each</span>
                 </div>
               </div>
 
               <div className="flex gap-4 mt-2">
                 <button onClick={() => setStep(3)} className="btn-secondary flex-1 justify-center">
-                  <ArrowLeft size={18} /> Back
+                  <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back
                 </button>
                 <button
                   onClick={handleLaunch}
                   disabled={loading}
                   className="btn-primary flex-1 justify-center disabled:opacity-40"
                 >
-                  {loading ? <Loader2 size={20} className="animate-spin" /> : <>Launch Survey <ArrowRight size={20} /></>}
+                  {loading ? <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  /> : <>Launch Survey <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>}
                 </button>
               </div>
             </div>
