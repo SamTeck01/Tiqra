@@ -261,7 +261,7 @@ export default function NewIdeaPage() {
   return (
     <div className="min-h-screen bg-[#FEFEFE] flex flex-col">
       {/* Top bar with sidebar */}
-      <div className="flex flex-col flex-1 ml-[324px]">
+      <div className="flex flex-col flex-1">
         {/* Back nav */}
         <div className="px-8 pt-8 pb-0">
           <Link href="/founder/ideas" className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors">

@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import AuthProvider from "@/components/auth/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Tiqra – Truth-First Market Intelligence",
@@ -37,12 +28,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-        <MobileBottomNav />
+    <html lang="en" className={GeistSans.variable}>
+      <body className={`antialiased ${GeistSans.className}`}>
+        <AuthProvider>
+          {children}
+          <MobileBottomNav />
+        </AuthProvider>
       </body>
     </html>
   );

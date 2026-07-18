@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
               <span className="text-white font-bold text-3xl">T</span>
             </div>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Validate ideas.<br />Make smarter<br />decisions.
+              Validate ideas.<br />Make smarter<br />decision
             </h1>
             <p className="text-white/70 text-lg">
               Real feedback from real people,<br />powered by AI truth-layer
@@ -43,47 +43,55 @@ export default function ForgotPasswordPage() {
       <div className="flex-1 flex flex-col justify-center px-8 lg:px-20 py-12 max-w-[700px] mx-auto w-full">
         <Link
           href="/auth/login"
-          className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-body text-text-primary hover:text-text-secondary mb-12 transition-colors font-medium"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={18}  /> Back to login
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={24} className="text-[#9F4EF5]" /> Back to login
         </Link>
 
         {!sent ? (
           <>
-            <div className="mb-8">
-              <h1 className="text-[32px] font-semibold text-text-primary">Reset Password</h1>
-              <p className="text-lg text-text-secondary mt-2">
-                Enter your email and we'll send you a reset link.
+            <div className="mb-8 flex flex-col gap-4">
+              <div className="w-20 h-20 bg-[#9F4EF5] rounded-xl flex items-center justify-center">
+                <HugeiconsIcon icon={Mail01Icon} size={40} className="text-white" />
+              </div>
+              <h1 className="text-[40px] font-bold text-text-primary leading-[150%] tracking-[-0.05em]">Forgot your password</h1>
+              <p className="text-lg text-text-secondary w-full max-w-[445px]">
+                No worries, Enter your email address and we'll send you a reset link right away.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-[445px]">
               <div>
-                <label className="tiqra-label">Email Address</label>
-                <div className="relative">
+                <label className="tiqra-label">Email address</label>
+                <div className="relative mt-2">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="tiqra-input pl-11"
+                    placeholder="example@gmail.com"
+                    className="tiqra-input"
                     required
                   />
-                  <HugeiconsIcon icon={Mail01Icon} size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"  />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading || !email}
-                className="btn-primary w-full justify-center disabled:opacity-40"
-              >
-                {loading ? (
-                  <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  />
-                ) : (
-                  <>Send Reset Link <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>
-                )}
-              </button>
+              <div className="flex flex-col gap-4">
+                <button
+                  type="submit"
+                  disabled={loading || !email}
+                  className="btn-primary w-full justify-center disabled:opacity-40 !py-4 !rounded-xl"
+                >
+                  {loading ? (
+                    <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  />
+                  ) : (
+                    <>Send reset link</>
+                  )}
+                </button>
+                <p className="text-center text-lg text-text-primary mt-2">
+                  <span className="text-text-secondary">Remember your password?</span>{" "}
+                  <Link href="/auth/login" className="text-[#9F4EF5]">Sign in</Link>
+                </p>
+              </div>
             </form>
           </>
         ) : (
@@ -92,7 +100,7 @@ export default function ForgotPasswordPage() {
               <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]"  />
             </div>
             <div className="text-center">
-              <h2 className="text-[32px] font-semibold text-text-primary">CheckmarkCircle01Icon your email</h2>
+              <h2 className="text-[32px] font-semibold text-text-primary">Check your email</h2>
               <p className="text-lg text-text-secondary mt-2">
                 We sent a password reset link to<br />
                 <strong className="text-text-primary">{email}</strong>

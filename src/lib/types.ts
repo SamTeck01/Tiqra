@@ -1,7 +1,20 @@
 export type UserRole = "founder" | "earner";
 export type SurveyStatus = "draft" | "live" | "completed" | "paused";
+export type IdeaStatus = "draft" | "live" | "completed";
 export type QuestionType = "multiple_choice" | "scale" | "short_text" | "yes_no";
 export type TransactionType = "credit" | "debit" | "withdrawal" | "escrow";
+
+export interface Idea {
+  $id: string;
+  title: string;
+  description: string;
+  creatorId: string;
+  status: IdeaStatus;
+  targetAudience: TargetAudience;
+  respondentsRequired: number;
+  respondentsCompleted: number;
+  createdAt: string;
+}
 
 export interface User {
   $id: string;

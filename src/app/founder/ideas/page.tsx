@@ -7,7 +7,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useSurveyStore } from "@/store/survey.store";
 import TopBar from "@/components/layout/TopBar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, ArrowRight01Icon, Clock01Icon, UserGroupIcon, Idea01Icon, Search01Icon, CheckmarkCircle01Icon, RepeatIcon, Cancel01Icon, FilterIcon } from "@hugeicons/core-free-icons";;
+import { Add01Icon, ArrowRight01Icon, Clock01Icon, UserGroupIcon, Idea01Icon, Search01Icon, CheckmarkCircle01Icon, RepeatIcon, Cancel01Icon, FilterIcon } from "@hugeicons/core-free-icons";
 import { formatNairaShort } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 

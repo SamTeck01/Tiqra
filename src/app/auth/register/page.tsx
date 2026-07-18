@@ -53,27 +53,36 @@ export default function RegisterPage() {
   const handleSubmit = async () => {
     clearError();
     try {
-      await register(form.email, form.password, form.name, form.role!);
+      // Correct arg order: name, email, password, role
+      await register(form.name, form.email, form.password, form.role!);
       setStep(4);
     } catch {}
   };
 
+  // Dynamic gradient: purple for Founder (Figma #426-1468), blue for Earner (Figma #689-1632)
+  const panelGradient = form.role === "earner"
+    ? "linear-gradient(136deg, #2563EB 0%, #9FB5E7 100%)"
+    : "linear-gradient(136deg, #9F4EF5 0%, #E5CAFC 100%)";
+
   return (
     <div className="min-h-screen flex bg-[#FEFEFE]">
-      {/* Left panel – purple gradient brand */}
+      {/* Left panel – dynamic brand gradient (purple=Founder, blue=Earner) */}
       <div
-        className="hidden lg:flex w-[594px] flex-shrink-0 rounded-[40px] m-3 flex-col relative overflow-hidden"
-        style={{
-          background: "linear-gradient(136deg, #9F4EF5 0%, #E5CAFC 100%)",
-        }}
+        className="hidden lg:flex w-[594px] flex-shrink-0 rounded-[40px] m-3 flex-col relative overflow-hidden transition-all duration-700"
+        style={{ background: panelGradient }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-white text-center px-12">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-3xl">T</span>
+            {/* Tiqra SVG Logo */}
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <svg width="180" height="54" viewBox="0 0 180 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 42L24 12L42 42H30L24 30L18 42H6Z" fill="white" fillOpacity="0.95" />
+                <path d="M18 42L24 30L30 42" fill="white" fillOpacity="0.5" />
+                <text x="54" y="39" fontFamily="inherit" fontSize="33" fontWeight="700" fill="white" letterSpacing="-0.8">Tiqra</text>
+              </svg>
             </div>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Validate ideas.<br />Make smarter<br />decisions.
+              Validate ideas.<br />Make smarter<br />decision
             </h1>
             <p className="text-white/70 text-lg">
               Real feedback from real people,<br />powered by AI truth-layer
@@ -81,6 +90,7 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
 
       {/* Right panel */}
       <div className="flex-1 flex flex-col justify-center px-8 lg:px-20 py-12 max-w-[700px] mx-auto w-full">
@@ -165,127 +175,104 @@ export default function RegisterPage() {
               I want to......
             </h2>
             <div className="flex gap-4">
-              {/* Founder */}
+              {/* Founder card — purple accent when selected */}
               <button
                 onClick={() => update("role", "founder")}
                 className={cn(
                   "flex-1 rounded-[30px] border-[1.5px] p-6 flex flex-col items-center gap-3 transition-all cursor-pointer",
                   form.role === "founder"
-                    ? "bg-[#F8F9FC] border-brand-primary"
+                    ? "bg-[#F8F9FC] border-[#9F4EF5]"
                     : "bg-[#FFFFFF] border-[#E5E7EB]"
                 )}
               >
                 <div
-                  className={cn(
-                    "w-[60px] h-[60px] rounded-xl flex items-center justify-center",
-                    form.role === "founder" ? "bg-brand-primary" : "bg-[#F8F9FC]"
-                  )}
+                  className="w-[60px] h-[60px] rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: form.role === "founder" ? "#9F4EF5" : "#F8F9FC" }}
                 >
                   <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
                     <path
                       d="M5 22.5L12.5 7.5L20 22.5"
                       stroke={form.role === "founder" ? "white" : "#9CA3AF"}
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                     />
                     <path
                       d="M7.5 17.5H17.5"
                       stroke={form.role === "founder" ? "white" : "#9CA3AF"}
-                      strokeWidth="2"
-                      strokeLinecap="round"
+                      strokeWidth="2" strokeLinecap="round"
                     />
-                    <circle
-                      cx="22.5"
-                      cy="20"
-                      r="4"
+                    <circle cx="22.5" cy="20" r="4"
                       stroke={form.role === "founder" ? "white" : "#9CA3AF"}
                       strokeWidth="2"
                     />
                   </svg>
                 </div>
                 <span
-                  className={cn(
-                    "text-lg font-medium",
-                    form.role === "founder" ? "text-brand-primary" : "text-text-primary"
-                  )}
+                  className="text-lg font-medium"
+                  style={{ color: form.role === "founder" ? "#9F4EF5" : "#111827" }}
                 >
                   Validate ideas
                 </span>
-                <span className="text-body text-text-secondary text-center">I'm a founder</span>
+                <span className="text-body text-[#6B7280] text-center">I&apos;m a founder</span>
               </button>
 
-              {/* Earner */}
+              {/* Earner card — blue accent when selected (Figma #689-1632) */}
               <button
                 onClick={() => update("role", "earner")}
                 className={cn(
                   "flex-1 rounded-[30px] border-[1.5px] p-6 flex flex-col items-center gap-3 transition-all cursor-pointer",
                   form.role === "earner"
-                    ? "bg-[#F8F9FC] border-brand-primary"
+                    ? "bg-[#F8F9FC] border-[#2563EB]"
                     : "bg-[#FFFFFF] border-[#E5E7EB]"
                 )}
               >
                 <div
-                  className={cn(
-                    "w-[60px] h-[60px] rounded-xl flex items-center justify-center",
-                    form.role === "earner" ? "bg-brand-primary" : "bg-[#F8F9FC]"
-                  )}
+                  className="w-[60px] h-[60px] rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: form.role === "earner" ? "#2563EB" : "#F8F9FC" }}
                 >
                   <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                    <rect
-                      x="5"
-                      y="8"
-                      width="20"
-                      height="14"
-                      rx="2"
+                    <rect x="5" y="8" width="20" height="14" rx="2"
                       stroke={form.role === "earner" ? "white" : "#9CA3AF"}
                       strokeWidth="2"
                     />
-                    <path
-                      d="M5 13H25"
+                    <path d="M5 13H25"
                       stroke={form.role === "earner" ? "white" : "#9CA3AF"}
                       strokeWidth="2"
                     />
-                    <path
-                      d="M10 18H14"
+                    <path d="M10 18H14"
                       stroke={form.role === "earner" ? "white" : "#9CA3AF"}
-                      strokeWidth="2"
-                      strokeLinecap="round"
+                      strokeWidth="2" strokeLinecap="round"
                     />
                   </svg>
                 </div>
                 <span
-                  className={cn(
-                    "text-lg font-medium",
-                    form.role === "earner" ? "text-brand-primary" : "text-text-primary"
-                  )}
+                  className="text-lg font-medium"
+                  style={{ color: form.role === "earner" ? "#2563EB" : "#111827" }}
                 >
                   Earn money
                 </span>
-                <span className="text-body text-text-secondary text-center">I'm a respondent</span>
+                <span className="text-body text-[#6B7280] text-center">I&apos;m a respondent</span>
               </button>
             </div>
 
-            {/* InformationCircleIcon box */}
+            {/* Info box */}
             {form.role && (
               <div className="flex items-start gap-3 bg-[#F8F9FC] rounded-xl p-4">
                 <div className="w-3 h-3 rounded-full bg-brand-primary mt-1 flex-shrink-0" />
                 <p className="text-body text-text-primary leading-relaxed">
-                  {form.role === "founder"
-                    ? "As a founder, you'll submit your idea, get AI generated survey questions, and receive a GO / PIVOT / KILL decision backed by real data"
-                    : "As a respondent, you'll complete surveys, share honest feedback, and earn real money directly to your wallet"}
+                  {form.role === "founder" ? (
+                    <>
+                      As a <strong>Founder</strong>, you&apos;ll submit your idea, get AI generated survey questions, and receive a GO / PIVOT / KILL decision backed by real data.
+                    </>
+                  ) : (
+                    <>
+                      As a <strong>Earner</strong>, you&apos;ll complete surveys from real founder and earn money per valid survey. Withdraw your earnings directly to your bank account.
+                    </>
+                  )}
                 </p>
               </div>
             )}
 
             <div className="flex flex-col gap-3 mt-2">
-              <button
-                onClick={() => { if (form.role) next(); }}
-                disabled={!form.role}
-                className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
-              </button>
               <button className="btn-secondary w-full justify-center gap-3">
                 <svg width="20" height="20" viewBox="0 0 20 20">
                   <path
@@ -293,13 +280,22 @@ export default function RegisterPage() {
                     fill="#4285F4"
                   />
                 </svg>
-                Continue with Google
+                Continue with google
               </button>
+              
               <div className="flex items-center gap-3">
                 <div className="h-px flex-1 bg-[#E5E7EB]" />
                 <span className="text-body text-text-secondary">Or continue with email</span>
                 <div className="h-px flex-1 bg-[#E5E7EB]" />
               </div>
+
+              <button
+                onClick={() => { if (form.role) next(); }}
+                disabled={!form.role}
+                className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
+              </button>
             </div>
           </div>
         )}
@@ -462,7 +458,7 @@ export default function RegisterPage() {
                 </button>
               </div>
               {form.confirmPassword && form.password !== form.confirmPassword && (
-                <p className="text-sm text-[#DC2626] mt-1">Passwords don't match</p>
+                <p className="text-sm text-[#DC2626] mt-1">Passwords don&apos;t match</p>
               )}
             </div>
 
@@ -503,23 +499,59 @@ export default function RegisterPage() {
 
         {/* ── Step 4: Verify / Success ── */}
         {step === 4 && (
-          <div className="flex flex-col items-center gap-6 py-8">
-            <div className="w-24 h-24 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]"  />
+          <div className="flex flex-col items-center gap-8 py-8 w-full max-w-[503px] mx-auto">
+            <div className="w-[120px] h-[120px] rounded-full bg-[#ECFDF5] border-[1.5px] border-[#16A34A] flex items-center justify-center mb-2">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]" />
             </div>
-            <div className="text-center">
-              <h2 className="text-[32px] font-semibold text-text-primary">Account Created!</h2>
-              <p className="text-lg text-text-secondary mt-2">
-                Welcome to Tiqra. CheckmarkCircle01Icon your email to verify your account.
+            
+            <div className="text-center flex flex-col gap-2">
+              <h1 className="text-[40px] font-bold text-text-primary leading-[150%] tracking-[-0.05em]">
+                You&apos;re in!!!
+              </h1>
+              <p className="text-lg text-text-secondary leading-[120%]">
+                Your account has been verified. Welcome to TIQRA, <span className="font-medium text-text-primary">{form.name || "User"}</span>.{" "}
+                {form.role === "founder" 
+                  ? "Start validating your ideas with real data."
+                  : "Start earning by sharing your opinions."}
               </p>
             </div>
+
+            <div className="w-full flex flex-col gap-6 mt-4">
+              <h3 className="text-lg text-brand-primary uppercase tracking-wider text-left w-full">
+                WHAT&apos;S NEXT
+              </h3>
+              
+              <div className="flex flex-col gap-4 w-full">
+                {[
+                  form.role === "founder"
+                    ? "Upload your idea and specify your target audience"
+                    : "Answer short surveys and get paid for each response",
+                  form.role === "founder"
+                    ? "Get AI generated survey questions"
+                    : "Get matched with surveys that fits you",
+                  form.role === "founder"
+                    ? "Receive a GO / PIVOT / KILL decision backed by real data"
+                    : "Earn rewards instantly after completion"
+                ].map((text, idx) => (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-[25px] h-[25px] rounded bg-brand-primary flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-base">{idx + 1}</span>
+                    </div>
+                    <span className="text-base text-text-secondary">
+                      {text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={() =>
                 router.push(form.role === "earner" ? "/earner/dashboard" : "/founder/dashboard")
               }
-              className="btn-primary w-full justify-center"
+              className="btn-primary w-full justify-center mt-4"
             >
-              Go to Dashboard <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
+              Go To Dashboard <HugeiconsIcon icon={ArrowRight01Icon} size={24} />
             </button>
           </div>
         )}

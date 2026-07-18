@@ -22,7 +22,7 @@ const earnerNav = [
 ];
 
 export default function MobileBottomNav() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const { user } = useAuthStore();
 
   // Don't show on auth pages

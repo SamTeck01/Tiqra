@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserIcon, Notification01Icon, LockIcon, SecurityLockIcon, Logout01Icon, ArrowRight01Icon, CheckmarkCircle01Icon, Camera01Icon, Mail01Icon, SmartPhone01Icon, Location01Icon, Building04Icon, StarIcon, Target01Icon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";;
+import { UserIcon, Notification01Icon, LockIcon, SecurityLockIcon, Logout01Icon, ArrowRight01Icon, CheckmarkCircle01Icon, Camera01Icon, Mail01Icon, SmartPhone01Icon, Location01Icon, Building04Icon, StarIcon, Target01Icon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
 import TopBar from "@/components/layout/TopBar";
@@ -25,13 +26,19 @@ const NOTIFICATION_SETTINGS = [
 ];
 
 export default function EarnerSettingsPage() {
-  const { user, logout } = useAuthStore();
+  const router = useRouter();
+  const { user, logout, switchRole } = useAuthStore();
   const [section, setSection] = useState<Section>("profile");
   const [saved, setSaved] = useState(false);
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [notifications, setNotifications] = useState(NOTIFICATION_SETTINGS);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(["Technology", "Finance"]);
+  const [privacySettings, setPrivacySettings] = useState([
+    { id: "anon", label: "Anonymous responses", description: "Your identity is never revealed to survey creators", on: true },
+    { id: "share_demo", label: "Share demographics for matching", description: "Helps us find better-paying surveys for you", on: true },
+    { id: "allow_ai", label: "Allow data for AI training", description: "Helps improve Tiqra's truth-layer AI (anonymised)", on: false },
+  ]);
 
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "Aisha Bello",
@@ -62,12 +69,15 @@ export default function EarnerSettingsPage() {
   const toggleNotif = (id: string) =>
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, on: !n.on } : n)));
 
+  const togglePrivacy = (id: string) =>
+    setPrivacySettings((prev) => prev.map((p) => (p.id === id ? { ...p, on: !p.on } : p)));
+
   const navItems: { key: Section; label: string; icon: React.ReactNode }[] = [
-    { key: "profile", label: "Edit Profile", icon: <HugeiconsIcon icon={UserIcon} size={20}  /> },
-    { key: "demographics", label: "Demographics", icon: <HugeiconsIcon icon={Target01Icon} size={20}  /> },
-    { key: "notifications", label: "Notifications", icon: <HugeiconsIcon icon={Notification01Icon} size={20}  /> },
-    { key: "password", label: "Password", icon: <HugeiconsIcon icon={LockIcon} size={20}  /> },
-    { key: "privacy", label: "Privacy", icon: <HugeiconsIcon icon={SecurityLockIcon} size={20}  /> },
+    { key: "profile", label: "Edit Profile", icon: <HugeiconsIcon icon={UserIcon} size={20} /> },
+    { key: "demographics", label: "Demographics", icon: <HugeiconsIcon icon={Target01Icon} size={20} /> },
+    { key: "notifications", label: "Notifications", icon: <HugeiconsIcon icon={Notification01Icon} size={20} /> },
+    { key: "password", label: "Password", icon: <HugeiconsIcon icon={LockIcon} size={20} /> },
+    { key: "privacy", label: "Privacy", icon: <HugeiconsIcon icon={SecurityLockIcon} size={20} /> },
   ];
 
   return (
@@ -104,7 +114,7 @@ export default function EarnerSettingsPage() {
                 </span>
               </div>
               <button className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center border-2 border-white">
-                <HugeiconsIcon icon={Camera01Icon} size={14} className="text-white"  />
+                <HugeiconsIcon icon={Camera01Icon} size={14} className="text-white" />
               </button>
             </div>
             <div className="text-center">
@@ -112,7 +122,7 @@ export default function EarnerSettingsPage() {
               <p className="text-sm text-text-secondary capitalize">{user?.role || "Earner"}</p>
               {/* Reliability badge */}
               <div className="flex items-center gap-1 mt-1 justify-center">
-                <HugeiconsIcon icon={StarIcon} size={14} className="text-[#D97706]"  />
+                <HugeiconsIcon icon={StarIcon} size={14} className="text-[#D97706]" />
                 <span className="text-sm font-medium text-[#D97706]">
                   {user?.reliabilityScore ?? 92}% reliable
                 </span>
@@ -133,7 +143,7 @@ export default function EarnerSettingsPage() {
             >
               <span className={section === key ? "text-brand-primary" : "text-text-muted"}>{icon}</span>
               {label}
-              <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-auto opacity-50"  />
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="ml-auto opacity-50" />
             </button>
           ))}
 
@@ -143,7 +153,16 @@ export default function EarnerSettingsPage() {
             onClick={logout}
             className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-body text-[#DC2626] hover:bg-[#FEE2E2] transition-all"
           >
-            <HugeiconsIcon icon={Logout01Icon} size={20}  /> Sign Out
+            <HugeiconsIcon icon={Logout01Icon} size={20} /> Sign Out
+          </button>
+          <button
+            onClick={() => {
+              switchRole("founder");
+              router.push("/founder/dashboard");
+            }}
+            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-body text-brand-primary hover:bg-[#EDE9FE] transition-all mt-4 border border-brand-primary/20"
+          >
+            <HugeiconsIcon icon={Building04Icon} size={20} /> Switch to Founder
           </button>
         </div>
 
@@ -156,11 +175,11 @@ export default function EarnerSettingsPage() {
               <h2 className="text-[18px] lg:text-[24px] font-semibold text-text-primary">Edit Profile</h2>
               <div className="flex flex-col gap-4 lg:gap-5">
                 {[
-                  { label: "Full Name", key: "name", icon: <HugeiconsIcon icon={UserIcon} size={18} className="text-text-muted"  />, type: "text", placeholder: "Your full name" },
-                  { label: "Email Address", key: "email", icon: <HugeiconsIcon icon={Mail01Icon} size={18} className="text-text-muted"  />, type: "email", placeholder: "you@example.com" },
-                  { label: "Phone Number", key: "phone", icon: <HugeiconsIcon icon={SmartPhone01Icon} size={18} className="text-text-muted"  />, type: "tel", placeholder: "+234 800 000 0000" },
-                  { label: "Location", key: "location", icon: <HugeiconsIcon icon={Location01Icon} size={18} className="text-text-muted"  />, type: "text", placeholder: "City, Country" },
-                  { label: "Occupation", key: "occupation", icon: <HugeiconsIcon icon={Building04Icon} size={18} className="text-text-muted"  />, type: "text", placeholder: "Your occupation" },
+                  { label: "Full Name", key: "name", icon: <HugeiconsIcon icon={UserIcon} size={18} className="text-text-muted" />, type: "text", placeholder: "Your full name" },
+                  { label: "Email Address", key: "email", icon: <HugeiconsIcon icon={Mail01Icon} size={18} className="text-text-muted" />, type: "email", placeholder: "you@example.com" },
+                  { label: "Phone Number", key: "phone", icon: <HugeiconsIcon icon={SmartPhone01Icon} size={18} className="text-text-muted" />, type: "tel", placeholder: "+234 800 000 0000" },
+                  { label: "Location", key: "location", icon: <HugeiconsIcon icon={Location01Icon} size={18} className="text-text-muted" />, type: "text", placeholder: "City, Country" },
+                  { label: "Occupation", key: "occupation", icon: <HugeiconsIcon icon={Building04Icon} size={18} className="text-text-muted" />, type: "text", placeholder: "Your occupation" },
                 ].map(({ label, key, icon, type, placeholder }) => (
                   <div key={key}>
                     <label className="tiqra-label">{label}</label>
@@ -178,7 +197,7 @@ export default function EarnerSettingsPage() {
                 ))}
               </div>
               <button onClick={handleSave} className="btn-primary w-fit gap-2">
-                {saved ? <><HugeiconsIcon icon={CheckmarkCircle01Icon} size={18}  /> Saved!</> : "Save Changes"}
+                {saved ? <><HugeiconsIcon icon={CheckmarkCircle01Icon} size={18} /> Saved!</> : "Save Changes"}
               </button>
             </div>
           )}
@@ -238,8 +257,8 @@ export default function EarnerSettingsPage() {
                     className="tiqra-input"
                   >
                     <option>Secondary School</option>
-                    <option>Bachelor's Degree</option>
-                    <option>Master's Degree</option>
+                    <option>Bachelor&apos;s Degree</option>
+                    <option>Master&apos;s Degree</option>
                     <option>PhD</option>
                     <option>Other</option>
                   </select>
@@ -339,17 +358,13 @@ export default function EarnerSettingsPage() {
           {section === "privacy" && (
             <div className="bg-white border border-[#F3F4F6] rounded-2xl p-8 flex flex-col gap-6">
               <h2 className="text-[24px] font-semibold text-text-primary">Privacy Settings</h2>
-              {[
-                { label: "Anonymous responses", description: "Your identity is never revealed to survey creators", on: true },
-                { label: "Share demographics for matching", description: "Helps us find better-paying surveys for you", on: true },
-                { label: "Allow data for AI training", description: "Helps improve Tiqra's truth-layer AI (anonymised)", on: false },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between py-4 border-b border-[#F3F4F6] last:border-0">
+              {privacySettings.map((item) => (
+                <div key={item.id} className="flex items-center justify-between py-4 border-b border-[#F3F4F6] last:border-0">
                   <div>
                     <p className="text-body font-medium text-text-primary">{item.label}</p>
                     <p className="text-sm text-text-secondary mt-0.5">{item.description}</p>
                   </div>
-                  <button className={cn("relative w-12 h-6 rounded-full transition-colors flex-shrink-0", item.on ? "bg-brand-primary" : "bg-[#E5E7EB]")}>
+                  <button onClick={() => togglePrivacy(item.id)} className={cn("relative w-12 h-6 rounded-full transition-colors flex-shrink-0", item.on ? "bg-brand-primary" : "bg-[#E5E7EB]")}>
                     <div className={cn("absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm", item.on ? "translate-x-7" : "translate-x-1")} />
                   </button>
                 </div>
@@ -360,6 +375,24 @@ export default function EarnerSettingsPage() {
               </div>
             </div>
           )}
+          {/* Mobile: Logout & Switch */}
+          <div className="mt-4 lg:hidden flex flex-col gap-3">
+            <button
+              onClick={() => {
+                switchRole("founder");
+                router.push("/founder/dashboard");
+              }}
+              className="flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl text-body text-brand-primary hover:bg-[#EDE9FE] transition-all w-full border border-brand-primary/20"
+            >
+              <HugeiconsIcon icon={Building04Icon} size={20} /> Switch to Founder
+            </button>
+            <button
+              onClick={logout}
+              className="flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl text-body text-[#DC2626] hover:bg-[#FEE2E2] transition-all w-full border border-[#FEE2E2]"
+            >
+              <HugeiconsIcon icon={Logout01Icon} size={20} /> Sign Out
+            </button>
+          </div>
         </div>
       </div>
     </div>

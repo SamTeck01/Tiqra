@@ -1,165 +1,400 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { useWalletStore } from "@/store/wallet.store";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowDownLeft01Icon, ArrowUpRight01Icon, Clock01Icon, CreditCardIcon, Wallet01Icon, ArrowRight01Icon, BankIcon } from "@hugeicons/core-free-icons";;
-import { cn } from "@/lib/utils";
-import TopBar from "@/components/layout/TopBar";
+import {
+  ArrowDownLeft01Icon,
+  ArrowUpRight01Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 
-const MOCK_TRANSACTIONS = [
-  { id: "t1", type: "credit", description: "Survey reward – AI Resume Builder", amount: 500, date: "2025-05-08", status: "completed" },
-  { id: "t2", type: "credit", description: "Survey reward – Freelancer Tools", amount: 800, date: "2025-05-07", status: "completed" },
-  { id: "t3", type: "debit", description: "Withdrawal to Bank", amount: 5000, date: "2025-05-04", status: "completed" },
-  { id: "t4", type: "credit", description: "Survey reward – Meal Planner App", amount: 600, date: "2025-04-30", status: "completed" },
-  { id: "t5", type: "credit", description: "Bonus – Reliability reward", amount: 200, date: "2025-04-28", status: "completed" },
-  { id: "t6", type: "credit", description: "Survey reward – Health Tracker", amount: 1000, date: "2025-04-25", status: "completed" },
+// ─── Mock transactions ─────────────────────────────────────────────────────────
+const TRANSACTIONS = [
+  { id: "t1", type: "credit" as const, title: "Mobile banking habits",       sub: "Survey rewards",   date: "April 8 2026 . 10:30 AM",  amount: "+₦500.00" },
+  { id: "t2", type: "debit"  as const, title: "Withdrawal to GTBank",        sub: "Bank withdrawal",  date: "April 4 2026 . 11:30 AM",  amount: "-₦3,000.00" },
+  { id: "t3", type: "credit" as const, title: "Coffee buying behaviour",     sub: "Survey rewards",   date: "April 6 2026 . 11:30 AM",  amount: "+₦500.00" },
+  { id: "t4", type: "debit"  as const, title: "Withdrawal to GTBank",        sub: "Bank withdrawal",  date: "April 2 2026 . 10:30 AM",  amount: "-₦2,000.00" },
+  { id: "t5", type: "credit" as const, title: "Online grocery preference",   sub: "Survey rewards",   date: "April 6 2026 . 11:30 AM",  amount: "+₦500.00" },
+  { id: "t6", type: "credit" as const, title: "Remote work productivity",    sub: "Survey rewards",   date: "March 30 2026 . 9:00 AM",  amount: "+₦600.00" },
 ];
 
+// ─── Transaction Row ──────────────────────────────────────────────────────────
+function TxRow({ type, title, sub, date, amount }: {
+  type: "credit" | "debit";
+  title: string;
+  sub: string;
+  date: string;
+  amount: string;
+}) {
+  const isCredit = type === "credit";
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{ padding: "16px 0 18px", borderBottom: "1px solid #E5E7EB" }}
+    >
+      {/* Left: icon + text */}
+      <div className="flex items-center" style={{ gap: 12 }}>
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 60,
+            height: 60,
+            background: isCredit ? "#ECFDF5" : "#EDE9FE",
+            borderRadius: 30,
+          }}
+        >
+          {isCredit
+            ? <HugeiconsIcon icon={ArrowDownLeft01Icon} size={24} className="text-[#16A34A]" />
+            : <HugeiconsIcon icon={ArrowUpRight01Icon}  size={24} className="text-[#9F4EF5]" />
+          }
+        </div>
+        <div className="flex flex-col" style={{ gap: 4 }}>
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 18, letterSpacing: "-0.02em", color: "#111827" }}>
+            {title}
+          </span>
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 14, letterSpacing: "-0.01em", color: "#6B7280" }}>
+            {sub}
+          </span>
+        </div>
+      </div>
+
+      {/* Right: date + amount */}
+      <div className="flex items-center" style={{ gap: 12 }}>
+        <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>
+          {date}
+        </span>
+        <span style={{
+          fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 18,
+          textAlign: "right", color: isCredit ? "#16A34A" : "#DC2626", minWidth: 100,
+        }}>
+          {amount}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function EarnerWalletPage() {
   const { user } = useAuthStore();
-  const { wallet, fetchWallet } = useWalletStore();
+  const { wallet, fetchWallet, transactions, fetchTransactions } = useWalletStore();
+  const [balanceVisible, setBalanceVisible] = useState(true);
 
   useEffect(() => {
-    if (user?.$id) fetchWallet(user.$id);
+    if (user?.$id) {
+      fetchWallet(user.$id);
+      fetchTransactions(user.$id);
+    }
   }, [user?.$id]);
 
-  const balance = wallet?.balance ?? 12500;
-  const totalEarned = wallet?.totalEarned ?? 28400;
-  const pendingBalance = wallet?.pendingBalance ?? 1300;
+  const balance     = wallet?.balance      ?? 7000;
+  const totalEarned = wallet?.totalEarned  ?? 21000;
+  
+  // Calculate total withdrawn dynamically from transactions or default to 14000
+  const withdrawalTransactions = transactions.filter(t => t.type === "withdrawal" || t.type === "debit");
+  const totalWithdrawn = withdrawalTransactions.reduce((acc, t) => acc + t.amount, 0) || 14000;
+
+  const mappedTransactions = transactions.length > 0 ? transactions.map((t) => ({
+    id: t.$id,
+    type: t.type === "credit" ? ("credit" as const) : ("debit" as const),
+    title: t.description || (t.type === "credit" ? "Survey rewards" : "Bank withdrawal"),
+    sub: t.type === "credit" ? "Survey rewards" : "Bank withdrawal",
+    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }) + " . " + new Date(t.createdAt).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }) : "Recent",
+    amount: (t.type === "credit" ? "+" : "-") + `₦${t.amount.toLocaleString()}.00`,
+  })) : TRANSACTIONS;
+
+  const fmt = (n: number) =>
+    "₦" + n.toLocaleString("en-NG", { minimumFractionDigits: 2 });
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <TopBar
-        title="Wallet"
-        subtitle="Track your earnings and withdraw funds."
-        action={
-          <Link href="/earner/wallet/withdraw" className="btn-primary text-sm lg:text-base px-3 lg:px-6 py-2 lg:py-3">
-            <HugeiconsIcon icon={BankIcon} size={18}  /> <span className="hidden sm:inline">Withdraw</span>
-          </Link>
-        }
-      />
+    <div className="flex flex-col min-h-screen" style={{ background: "#FEFEFE" }}>
 
-      <div className="page-content flex flex-col gap-6 lg:gap-8">
-        {/* Balance card */}
-        <div className="bg-brand-primary rounded-[20px] lg:rounded-[30px] p-5 lg:p-8 flex flex-col gap-4 lg:gap-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-white/70 text-sm lg:text-lg mb-1">Available Balance</p>
-              <h2 className="text-[36px] lg:text-[48px] font-bold text-white leading-none">
-                ₦{balance.toLocaleString()}
-              </h2>
-            </div>
-            <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 flex items-center justify-center">
-              <HugeiconsIcon icon={Wallet01Icon} size={24} className="text-white"  />
-            </div>
-          </div>
-          <div className="flex gap-4 lg:gap-6 flex-wrap">
-            <div className="flex flex-col gap-1">
-              <p className="text-white/60 text-xs lg:text-sm">Total Earned</p>
-              <p className="text-white text-base lg:text-lg font-medium">₦{totalEarned.toLocaleString()}</p>
-            </div>
-            <div className="w-px bg-white/20" />
-            <div className="flex flex-col gap-1">
-              <p className="text-white/60 text-xs lg:text-sm">Pending</p>
-              <p className="text-white text-base lg:text-lg font-medium">₦{pendingBalance.toLocaleString()}</p>
-            </div>
-            <div className="w-px bg-white/20" />
-            <div className="flex flex-col gap-1">
-              <p className="text-white/60 text-xs lg:text-sm">Reliability</p>
-              <p className="text-white text-base lg:text-lg font-medium">{user?.reliabilityScore ?? 92}%</p>
-            </div>
-          </div>
+      {/* ── Page Header Row ───────────────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between"
+        style={{ paddingTop: 60, width: 1016 }}
+      >
+        <div className="flex flex-col" style={{ gap: 4 }}>
+          <h1 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 40, letterSpacing: "-0.03em", color: "#111827" }}>
+            Wallet
+          </h1>
+          <p style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, letterSpacing: "-0.02em", color: "#6B7280" }}>
+            Track your earnings and withdraw funds.
+          </p>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-3 gap-3 lg:gap-4">
-          {[
-            { label: "This week", value: "₦2,300", sub: "from 3 surveys" },
-            { label: "This month", value: "₦8,500", sub: "from 11 surveys" },
-            { label: "Surveys done", value: "24", sub: "all time" },
-          ].map(({ label, value, sub }) => (
-            <div key={label} className="bg-[#F8F9FC] rounded-2xl p-3 lg:p-5 flex flex-col gap-1">
-              <p className="text-xs lg:text-sm text-text-secondary">{label}</p>
-              <p className="text-[18px] lg:text-[24px] font-bold text-text-primary">{value}</p>
-              <p className="text-xs text-text-muted hidden sm:block">{sub}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Quick actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
-          <Link
-            href="/earner/wallet/withdraw"
-            className="flex items-center gap-3 lg:gap-4 p-4 lg:p-5 bg-white border border-[#F3F4F6] rounded-2xl hover:shadow-card-hover transition-all"
+        <div className="flex items-center" style={{ gap: 14 }}>
+          {/* Search bar */}
+          <div
+            className="flex items-center"
+            style={{ width: 300, padding: "16px 12px", background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: 12, gap: 10 }}
           >
-            <div className="w-11 h-11 lg:w-12 lg:h-12 rounded-full bg-[#EDE9FE] flex items-center justify-center flex-shrink-0">
-              <HugeiconsIcon icon={ArrowDownLeft01Icon} size={20} className="text-brand-primary"  />
-            </div>
-            <div className="text-left flex-1">
-              <p className="text-sm lg:text-body font-semibold text-text-primary">Withdraw Funds</p>
-              <p className="text-xs lg:text-sm text-text-secondary">Send to bank account</p>
-            </div>
-            <HugeiconsIcon icon={ArrowRight01Icon} size={18} className="text-text-secondary"  />
-          </Link>
-          <div className="flex items-center gap-3 lg:gap-4 p-4 lg:p-5 bg-white border border-[#F3F4F6] rounded-2xl">
-            <div className="w-11 h-11 lg:w-12 lg:h-12 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0">
-              <HugeiconsIcon icon={CreditCardIcon} size={20} className="text-[#16A34A]"  />
-            </div>
-            <div className="text-left flex-1">
-              <p className="text-sm lg:text-body font-semibold text-text-primary">Bank Details</p>
-              <p className="text-xs lg:text-sm text-text-secondary">Manage payout methods</p>
-            </div>
-            <HugeiconsIcon icon={ArrowRight01Icon} size={18} className="text-text-secondary"  />
+            <HugeiconsIcon icon={Search01Icon} size={24} className="text-[#111827]" />
+            <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 14, color: "#111827" }}>Search</span>
+          </div>
+          {/* Notification bell */}
+          <div
+            className="flex items-center justify-center cursor-pointer"
+            style={{ width: 60, height: 60, background: "#9F4EF5", borderRadius: 999 }}
+          >
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
         </div>
+      </div>
 
-        {/* Transactions */}
-        <div className="flex flex-col gap-4 lg:gap-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[18px] lg:text-[24px] font-semibold text-text-primary">Transaction History</h2>
-            <button className="btn-ghost text-sm">View all</button>
+      {/* ── Balance Display — centered, y=205 ─────────────────────────── */}
+      <div
+        className="flex flex-col items-center justify-center text-center mx-auto"
+        style={{ gap: 14, marginTop: 145, width: 1016 }}
+      >
+        {/* Available Balance label with Wallet icon */}
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" className="text-[#6B7280]">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+            <path d="M2 10h20" stroke="currentColor" strokeWidth="2"/>
+            <circle cx="16" cy="15" r="1.5" fill="currentColor"/>
+          </svg>
+          <span
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 400,
+              fontSize: 18,
+              lineHeight: "1.2em",
+              letterSpacing: "-0.02em",
+              color: "#6B7280",
+            }}
+          >
+            Available Balance
+          </span>
+        </div>
+
+        {/* Balance amount — H1 Inter Bold 60px */}
+        <div className="flex items-center justify-center" style={{ gap: 10 }}>
+          <span
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 700,
+              fontSize: 60,
+              lineHeight: "1.2em",
+              letterSpacing: "-0.05em",
+              color: "#111827",
+            }}
+          >
+            {balanceVisible ? fmt(balance) : "₦••••••"}
+          </span>
+          {/* Eye toggle */}
+          <button
+            onClick={() => setBalanceVisible(!balanceVisible)}
+            className="flex items-center justify-center"
+            style={{ width: 40, height: 40, borderRadius: 999, border: "none", background: "none", cursor: "pointer" }}
+          >
+            {balanceVisible ? (
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="#6B7280" strokeWidth="2"/>
+              </svg>
+            ) : (
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Action Buttons — y=approx 440, gap=24 ─────────────────────── */}
+      <div
+        className="flex items-center"
+        style={{ gap: 24, marginTop: 40, width: 1016 }}
+      >
+        {/* Withdraw: 500x60 purple */}
+        <Link
+          href="/earner/wallet/withdraw"
+          className="flex items-center justify-center"
+          style={{
+            width: 500,
+            height: 60,
+            background: "#9F4EF5",
+            borderRadius: 12,
+            gap: 10,
+            textDecoration: "none",
+          }}
+        >
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path d="M7 7l10 10M17 17H7M17 17V7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 18,
+              color: "#FFFFFF",
+            }}
+          >
+            Withdraw
+          </span>
+        </Link>
+
+        {/* Manage account: 500x60 secondary bg, border E5E7EB, purple text */}
+        <Link
+          href="/earner/wallet/payment-methods"
+          className="flex items-center justify-center"
+          style={{
+            width: 500,
+            height: 60,
+            background: "#F8F9FC",
+            border: "1px solid #E5E7EB",
+            borderRadius: 12,
+            gap: 10,
+            textDecoration: "none",
+          }}
+        >
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" className="text-[#9F4EF5]">
+            <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
+            <path d="M2 10h20" stroke="currentColor" strokeWidth="2"/>
+            <circle cx="16" cy="15" r="1.5" fill="currentColor"/>
+          </svg>
+          <span
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 18,
+              color: "#9F4EF5",
+            }}
+          >
+            Manage account
+          </span>
+        </Link>
+      </div>
+
+      {/* ── Mini stat cards — 500x120 each, gap=24, border-radius 20px ── */}
+      <div
+        className="flex items-center"
+        style={{ gap: 24, marginTop: 24, width: 1016 }}
+      >
+        {/* Total earned: white, border E5E7EB, rounded-20, padding 24px */}
+        <div
+          className="flex flex-col justify-center"
+          style={{
+            flex: 1,
+            height: 120,
+            background: "#FFFFFF",
+            border: "1px solid #E5E7EB",
+            borderRadius: 20,
+            padding: 24,
+            gap: 8,
+          }}
+        >
+          <div className="flex items-center" style={{ gap: 10 }}>
+            <HugeiconsIcon icon={ArrowDownLeft01Icon} size={20} className="text-[#16A34A]" />
+            <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#16A34A" }}>
+              Total earned
+            </span>
+          </div>
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 24, letterSpacing: "-0.02em", color: "#111827" }}>
+            {fmt(totalEarned)}
+          </span>
+        </div>
+
+        {/* Total withdrawn */}
+        <div
+          className="flex flex-col justify-center"
+          style={{
+            flex: 1,
+            height: 120,
+            background: "#FFFFFF",
+            border: "1px solid #E5E7EB",
+            borderRadius: 20,
+            padding: 24,
+            gap: 8,
+          }}
+        >
+          <div className="flex items-center" style={{ gap: 10 }}>
+            <HugeiconsIcon icon={ArrowUpRight01Icon} size={20} className="text-[#9F4EF5]" />
+            <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#9F4EF5" }}>
+              Total withdrawn
+            </span>
+          </div>
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 24, letterSpacing: "-0.02em", color: "#111827" }}>
+            {fmt(totalWithdrawn)}
+          </span>
+        </div>
+      </div>
+
+      {/* ── Transaction History Table ──────────────────────────────────── */}
+      <div
+        className="flex flex-col"
+        style={{ marginTop: 24, width: 1016, marginBottom: 40 }}
+      >
+        <div
+          style={{
+            background: "#FFFFFF",
+            border: "1px solid #E5E7EB",
+            borderRadius: 30,
+            padding: "0 20px 16px",
+          }}
+        >
+          {/* Table header */}
+          <div
+            className="flex items-center justify-between"
+            style={{ padding: "16px 0 18px", borderBottom: "1px solid #E5E7EB" }}
+          >
+            <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 24, letterSpacing: "-0.02em", color: "#111827" }}>
+              Transaction History
+            </span>
+            <div
+              className="flex items-center"
+              style={{ padding: 12, border: "1px solid #E5E7EB", borderRadius: 12, gap: 10 }}
+            >
+              <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#111827" }}>
+                All Transactions
+              </span>
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M6 9l6 6 6-6" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2 lg:gap-3">
-            {MOCK_TRANSACTIONS.map((tx) => (
-              <div
-                key={tx.id}
-                className="flex items-center justify-between p-4 lg:p-5 bg-white border border-[#F3F4F6] rounded-2xl hover:shadow-card-hover transition-all"
+          {mappedTransactions.slice(0, 6).map((tx) => (
+            <TxRow key={tx.id} {...tx} />
+          ))}
+
+          {/* View all transaction button */}
+          <div style={{ marginTop: 20 }}>
+            <button
+              className="flex items-center justify-center w-full"
+              style={{
+                height: 60,
+                background: "#F8F9FC",
+                border: "none",
+                borderRadius: 12,
+                cursor: "pointer",
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "Geist, sans-serif",
+                  fontWeight: 500,
+                  fontSize: 18,
+                  color: "#9F4EF5",
+                }}
               >
-                <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
-                  <div
-                    className={cn(
-                      "w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center flex-shrink-0",
-                      tx.type === "credit" ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"
-                    )}
-                  >
-                    {tx.type === "credit" ? (
-                      <HugeiconsIcon icon={ArrowDownLeft01Icon} size={20} className="text-[#16A34A]"  />
-                    ) : (
-                      <HugeiconsIcon icon={ArrowUpRight01Icon} size={20} className="text-[#DC2626]"  />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm lg:text-body font-medium text-text-primary truncate">{tx.description}</p>
-                    <p className="text-xs lg:text-sm text-text-secondary flex items-center gap-1">
-                      <HugeiconsIcon icon={Clock01Icon} size={11}  />
-                      {new Date(tx.date).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={cn(
-                    "text-sm lg:text-body font-semibold flex-shrink-0 ml-2",
-                    tx.type === "credit" ? "text-[#16A34A]" : "text-[#DC2626]"
-                  )}
-                >
-                  {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
-                </span>
-              </div>
-            ))}
+                View all transaction
+              </span>
+            </button>
           </div>
         </div>
       </div>

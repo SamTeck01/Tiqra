@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { useWalletStore } from "@/store/wallet.store";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, ArrowUpRight01Icon, ArrowDownLeft01Icon, Clock01Icon, CreditCardIcon, Wallet01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";;
+import { Add01Icon, ArrowUpRight01Icon, ArrowDownLeft01Icon, Clock01Icon, CreditCardIcon, Wallet01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import TopBar from "@/components/layout/TopBar";
 

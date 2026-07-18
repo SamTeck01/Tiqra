@@ -1,175 +1,700 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { useWalletStore } from "@/store/wallet.store";
-import TopBar from "@/components/layout/TopBar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { DashboardSquare01Icon, Search01Icon, File01Icon, Wallet01Icon, User02Icon, FlashIcon, StarIcon, ArrowRight01Icon, Clock01Icon, Money01Icon, CheckmarkCircle01Icon, ChartIncreaseIcon } from "@hugeicons/core-free-icons";
-import { formatNairaShort } from "@/lib/utils";
+import {
+  Search01Icon,
+  Clock01Icon,
+  ArrowRight01Icon,
+  ArrowUpRight01Icon,
+  ArrowDownLeft01Icon,
+} from "@hugeicons/core-free-icons";
 
-const RECENT_SURVEYS = [
-  { id: "s1", title: "AI powered Resume builder", reward: 500, duration: "2 mins", category: "Tech", status: "available" },
-  { id: "s2", title: "Freelancer invoice tools", reward: 800, duration: "5 mins", category: "Finance", status: "available" },
-  { id: "s3", title: "Remote work productivity", reward: 600, duration: "3 mins", category: "Productivity", status: "available" },
+// ─── Mock data matching Figma ───────────────────────────────────────────────
+const AVAILABLE_SURVEYS = [
+  { id: "s1", title: "Al powered Resume builder", reward: "₦500.00", duration: "2 mins" },
+  { id: "s2", title: "Freelance invoice tools",    reward: "₦800.00", duration: "5 mins" },
+  { id: "s3", title: "Remote work tools",           reward: "₦600.00", duration: "3 mins" },
 ];
 
-export default function EarnerDashboardPage() {
+const TRANSACTIONS = [
+  {
+    id: "t1",
+    type: "credit" as const,
+    title: "Mobile banking habits",
+    sub: "Survey rewards",
+    date: "April 8 2026 . 10:30 AM",
+    amount: "+₦500.00",
+  },
+  {
+    id: "t2",
+    type: "debit" as const,
+    title: "Withdrawal to GTBank",
+    sub: "Bank withdrawal",
+    date: "April 4 2026 . 11:30 AM",
+    amount: "-₦3,000.00",
+  },
+  {
+    id: "t3",
+    type: "credit" as const,
+    title: "Coffee buying behaviour",
+    sub: "Survey rewards",
+    date: "April 6 2026 . 11:30 AM",
+    amount: "+₦500.00",
+  },
+  {
+    id: "t4",
+    type: "debit" as const,
+    title: "Withdrawal to GTBank",
+    sub: "Bank withdrawal",
+    date: "April 2 2026 . 10:30 AM",
+    amount: "-₦2,000.00",
+  },
+  {
+    id: "t5",
+    type: "credit" as const,
+    title: "Online grocery preference",
+    sub: "Survey rewards",
+    date: "April 6 2026 . 11:30 AM",
+    amount: "+₦500.00",
+  },
+];
+
+// ─── Survey Card ─────────────────────────────────────────────────────────────
+function SurveyCard({
+  title,
+  reward,
+  duration,
+  id,
+}: {
+  title: string;
+  reward: string;
+  duration: string;
+  id: string;
+}) {
   const router = useRouter();
+  return (
+    /* EL-20b4afbc: column, padding 24px, gap 10px, white, border F1F5F9 1px, shadow rgba(237,233,254,0.7), borderRadius 16px */
+    <div
+      onClick={() => router.push(`/earner/surveys/${id}`)}
+      className="cursor-pointer flex flex-col"
+      style={{
+        padding: 24,
+        gap: 10,
+        background: "#FFFFFF",
+        border: "1px solid #F1F5F9",
+        boxShadow: "0px 4px 24px 0px rgba(237, 233, 254, 0.7)",
+        borderRadius: 16,
+      }}
+    >
+      {/* EL-fadfe7dc: column, alignItems flex-end, gap 24 */}
+      <div className="flex flex-col items-end" style={{ gap: 24 }}>
+        {/* EL-467ca15a: column, fill, gap 8 */}
+        <div className="flex flex-col w-full" style={{ gap: 8 }}>
+          {/* Title: Geist Regular 20px */}
+          <p
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 400,
+              fontSize: 20,
+              lineHeight: "1.2em",
+              letterSpacing: "-0.02em",
+              color: "#111827",
+            }}
+          >
+            {title}
+          </p>
+          {/* Duration badge: row, gap 4, icon 16x16 */}
+          <div className="flex items-center" style={{ gap: 4 }}>
+            <HugeiconsIcon icon={Clock01Icon} size={16} className="text-[#6B7280]" />
+            {/* Body/Captions: Geist Medium 12px */}
+            <span
+              style={{
+                fontFamily: "Geist, sans-serif",
+                fontWeight: 500,
+                fontSize: 12,
+                lineHeight: "1.2em",
+                letterSpacing: "-0.01em",
+                color: "#6B7280",
+              }}
+            >
+              {duration}
+            </span>
+          </div>
+        </div>
+
+        {/* EL-a2f44fe6: row, center, gap 71 */}
+        <div className="flex items-center justify-center" style={{ gap: 71 }}>
+          {/* EL-1acda7bf: column, gap 4, width 107 */}
+          <div className="flex flex-col" style={{ gap: 4, width: 107 }}>
+            {/* Reward: H3 Geist SemiBold 24px */}
+            <span
+              style={{
+                fontFamily: "Geist, sans-serif",
+                fontWeight: 600,
+                fontSize: 24,
+                lineHeight: "1.2em",
+                letterSpacing: "-0.02em",
+                color: "#111827",
+              }}
+            >
+              {reward}
+            </span>
+            {/* Body/small: Geist Regular 14px secondary */}
+            <span
+              style={{
+                fontFamily: "Geist, sans-serif",
+                fontWeight: 400,
+                fontSize: 14,
+                lineHeight: "1.2em",
+                letterSpacing: "-0.01em",
+                color: "#6B7280",
+              }}
+            >
+              Reward
+            </span>
+          </div>
+
+          {/* EL-50b30851: Start button — row, padding 12px 16px, purple bg, radius 12 */}
+          <div
+            className="flex items-center justify-center"
+            style={{
+              padding: "12px 16px",
+              background: "#9F4EF5",
+              borderRadius: 12,
+              gap: 10,
+              cursor: "pointer",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 500,
+                fontSize: 16,
+                color: "#FFFFFF",
+              }}
+            >
+              Start
+            </span>
+            <HugeiconsIcon icon={ArrowRight01Icon} size={24} className="text-white" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Transaction Row ──────────────────────────────────────────────────────────
+function TxRow({
+  type,
+  title,
+  sub,
+  date,
+  amount,
+}: {
+  type: "credit" | "debit";
+  title: string;
+  sub: string;
+  date: string;
+  amount: string;
+}) {
+  const isCredit = type === "credit";
+  return (
+    /* EL-de6109c7 or EL-e592c709 row */
+    <div
+      className="flex items-center"
+      style={{
+        padding: "16px 0 18px",
+        gap: 184,
+        borderBottom: "1px solid #E5E7EB",
+      }}
+    >
+      {/* Left: icon + text + date */}
+      <div className="flex items-center" style={{ gap: 12 }}>
+        {/* Icon: 60x60 rounded-30 */}
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 60,
+            height: 60,
+            background: isCredit ? "#ECFDF5" : "#EDE9FE",
+            borderRadius: 30,
+          }}
+        >
+          {isCredit ? (
+            <HugeiconsIcon icon={ArrowDownLeft01Icon} size={24} className="text-[#16A34A]" />
+          ) : (
+            <HugeiconsIcon icon={ArrowUpRight01Icon} size={24} className="text-[#9F4EF5]" />
+          )}
+        </div>
+        {/* Title + sub + date */}
+        <div className="flex flex-col" style={{ gap: 4, width: 221 }}>
+          <span
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 400,
+              fontSize: 18,
+              lineHeight: "1.2em",
+              letterSpacing: "-0.02em",
+              color: "#111827",
+            }}
+          >
+            {title}
+          </span>
+          <span
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 400,
+              fontSize: 14,
+              lineHeight: "1.2em",
+              letterSpacing: "-0.01em",
+              color: "#6B7280",
+              width: 233,
+            }}
+          >
+            {sub}
+          </span>
+        </div>
+      </div>
+
+      {/* Right: date + amount */}
+      <div className="flex items-center" style={{ gap: 12 }}>
+        <span
+          style={{
+            fontFamily: "Geist, sans-serif",
+            fontWeight: 400,
+            fontSize: 16,
+            lineHeight: "1.2em",
+            letterSpacing: "-0.02em",
+            color: "#6B7280",
+            width: 170,
+          }}
+        >
+          {date}
+        </span>
+        <span
+          style={{
+            fontFamily: "Geist, sans-serif",
+            fontWeight: 400,
+            fontSize: 18,
+            lineHeight: "1.2em",
+            letterSpacing: "-0.02em",
+            textAlign: "right",
+            color: isCredit ? "#16A34A" : "#DC2626",
+            width: 140,
+          }}
+        >
+          {amount}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Stat Card (glass / white) ────────────────────────────────────────────────
+function StatCard({
+  label,
+  value,
+  purple,
+}: {
+  label: string;
+  value: string;
+  purple?: boolean;
+}) {
+  return (
+    <div
+      className="relative flex-shrink-0"
+      style={{
+        width: 320,
+        height: 150,
+        background: purple ? "#9F4EF5" : "rgba(255, 255, 255, 0.2)",
+        border: "1px solid #E5E7EB",
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      {/* Label — y=29 x=29 */}
+      <span
+        style={{
+          position: "absolute",
+          left: 29,
+          top: 29,
+          width: 192,
+          height: 22,
+          fontFamily: "Geist, sans-serif",
+          fontWeight: 400,
+          fontSize: 18,
+          lineHeight: "1.2em",
+          letterSpacing: "-0.02em",
+          color: purple ? "#FEFEFE" : "#6B7280",
+        }}
+      >
+        {label}
+      </span>
+      {/* Value — y=75 x=29 */}
+      <span
+        style={{
+          position: "absolute",
+          left: 29,
+          top: 75,
+          fontFamily: "Geist, sans-serif",
+          fontWeight: 600,
+          fontSize: 32,
+          lineHeight: "1.5em",
+          letterSpacing: "-0.03em",
+          color: purple ? "#FEFEFE" : "#111827",
+        }}
+      >
+        {value}
+      </span>
+      {/* Icon circle — x=231 y=45 — 60x60 */}
+      <div
+        style={{
+          position: "absolute",
+          right: 29,
+          top: 45,
+          width: 60,
+          height: 60,
+          background: purple ? "transparent" : "#9F4EF5",
+          border: purple ? "1px solid #E5E7EB" : "none",
+          borderRadius: 999,
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function EarnerDashboardPage() {
   const { user } = useAuthStore();
-  const { wallet, fetchWallet } = useWalletStore();
+  const { wallet, fetchWallet, transactions, fetchTransactions } = useWalletStore();
 
   useEffect(() => {
-    if (user?.$id) fetchWallet(user.$id);
+    if (user?.$id) {
+      fetchWallet(user.$id);
+      fetchTransactions(user.$id);
+    }
   }, [user?.$id]);
 
-  const balance = wallet?.balance ?? 0;
-  const totalEarned = wallet?.totalEarned ?? 12500;
-  const completedSurveys = 8;
-  const reliabilityScore = user?.reliabilityScore ?? 92;
+  const balance = wallet?.balance ?? 9000;
+  const pendingEarning = wallet?.pendingBalance ?? 1000;
+  const completedSurveys = 12;
 
-  const firstName = user?.name?.split(" ")[0] || "there";
+  const isEmpty = transactions.length === 0;
+
+  const mappedTransactions = transactions.map((t) => ({
+    id: t.$id,
+    type: t.type === "credit" ? ("credit" as const) : ("debit" as const),
+    title: t.description || (t.type === "credit" ? "Survey rewards" : "Bank withdrawal"),
+    sub: t.type === "credit" ? "Survey rewards" : "Bank withdrawal",
+    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }) + " . " + new Date(t.createdAt).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }) : "Recent",
+    amount: (t.type === "credit" ? "+" : "-") + `₦${t.amount.toLocaleString()}.00`,
+  }));
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <TopBar
-        title={`Good morning, ${firstName} 👋`}
-        subtitle="Here's what's available for you today."
-      />
-
-      <div className="page-content flex flex-col gap-6 lg:gap-8">
-        {/* Stats row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-          <div className="bg-white rounded-2xl border border-[#F3F4F6] p-4 lg:p-5 flex flex-col gap-2 lg:gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs lg:text-sm text-text-secondary">Wallet Balance</span>
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-[#EDE9FE] flex items-center justify-center">
-                <HugeiconsIcon icon={Money01Icon} size={15} className="text-brand-primary"  />
-              </div>
-            </div>
-            <span className="text-[20px] lg:text-[24px] font-bold text-text-primary">₦{balance.toLocaleString()}</span>
-            <Link href="/earner/wallet" className="text-xs lg:text-sm text-brand-primary hover:underline">
-              View wallet →
-            </Link>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#F3F4F6] p-4 lg:p-5 flex flex-col gap-2 lg:gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs lg:text-sm text-text-secondary">Total Earned</span>
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-                <HugeiconsIcon icon={ChartIncreaseIcon} size={15} className="text-[#16A34A]"  />
-              </div>
-            </div>
-            <span className="text-[20px] lg:text-[24px] font-bold text-text-primary">₦{totalEarned.toLocaleString()}</span>
-            <span className="text-xs lg:text-sm text-text-secondary">All time</span>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#F3F4F6] p-4 lg:p-5 flex flex-col gap-2 lg:gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs lg:text-sm text-text-secondary">Surveys Done</span>
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-[#EDE9FE] flex items-center justify-center">
-                <HugeiconsIcon icon={CheckmarkCircle01Icon} size={15} className="text-brand-primary"  />
-              </div>
-            </div>
-            <span className="text-[20px] lg:text-[24px] font-bold text-text-primary">{completedSurveys}</span>
-            <span className="text-xs lg:text-sm text-text-secondary">Completed</span>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-[#F3F4F6] p-4 lg:p-5 flex flex-col gap-2 lg:gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs lg:text-sm text-text-secondary">Reliability</span>
-              <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center">
-                <HugeiconsIcon icon={StarIcon} size={15} className="text-[#D97706]"  />
-              </div>
-            </div>
-            <span className="text-[20px] lg:text-[24px] font-bold text-text-primary">{reliabilityScore}%</span>
-            <span className="text-xs lg:text-sm text-[#16A34A] font-medium">Excellent</span>
-          </div>
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ background: "#FEFEFE" }}
+    >
+      {/* ── Page Header Row — Figma: y=60, x=356 ───────────────────────────── */}
+      <div
+        className="flex items-center"
+        style={{ gap: 213, padding: "60px 0 0 0", marginLeft: 0, marginBottom: 0 }}
+      >
+        <div
+          className="flex flex-col"
+          style={{ gap: 4, width: 430, paddingLeft: 0 }}
+        >
+          {/* Title: Inter Bold 40px */}
+          <h1
+            style={{
+              fontFamily: "Inter, sans-serif",
+              fontWeight: 700,
+              fontSize: 40,
+              lineHeight: "1.5em",
+              letterSpacing: "-0.03em",
+              color: "#111827",
+            }}
+          >
+            Dashboard
+          </h1>
+          {/* Subtitle: Body/body */}
+          <p
+            style={{
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 400,
+              fontSize: 16,
+              lineHeight: "1.2em",
+              letterSpacing: "-0.02em",
+              color: "#6B7280",
+            }}
+          >
+            Turn your ideas into clear decisions using real user insights.
+          </p>
         </div>
 
-        {/* Quick earn banner */}
-        <div className="bg-brand-primary rounded-[20px] lg:rounded-[30px] p-5 lg:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
-              <HugeiconsIcon icon={FlashIcon} size={24} className="text-white"  />
-            </div>
-            <div>
-              <p className="text-white font-semibold text-base lg:text-lg">
-                {RECENT_SURVEYS.length} new surveys available
-              </p>
-              <p className="text-white/70 text-sm lg:text-base">
-                Earn up to ₦{RECENT_SURVEYS.reduce((a, s) => Math.max(a, s.reward), 0).toLocaleString()} today
-              </p>
-            </div>
+        {/* Right: search + notification */}
+        <div className="flex items-center" style={{ gap: 14 }}>
+          {/* Search bar: 300px wide, white, border E5E7EB, rounded-12, padding 16px 12px */}
+          <div
+            className="flex items-center"
+            style={{
+              width: 300,
+              padding: "16px 12px",
+              background: "#FFFFFF",
+              border: "1px solid #E5E7EB",
+              borderRadius: 12,
+              gap: 10,
+            }}
+          >
+            <HugeiconsIcon icon={Search01Icon} size={24} className="text-[#111827]" />
+            <span
+              style={{
+                fontFamily: "Geist, sans-serif",
+                fontWeight: 400,
+                fontSize: 14,
+                color: "#111827",
+              }}
+            >
+              Search
+            </span>
           </div>
-          <Link href="/earner/surveys" className="flex items-center gap-2 bg-white text-brand-primary font-medium px-4 py-2.5 lg:px-5 rounded-xl hover:bg-[#F8F9FC] transition-colors text-sm lg:text-base whitespace-nowrap">
-            Browse Surveys <HugeiconsIcon icon={ArrowRight01Icon} size={16}  />
-          </Link>
+          {/* Notification bell: 60x60 brand-primary rounded-999 */}
+          <div
+            className="flex items-center justify-center cursor-pointer"
+            style={{
+              width: 60,
+              height: 60,
+              background: "#9F4EF5",
+              borderRadius: 999,
+            }}
+          >
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main content — starting x=356, y=205 (stat cards) ───────────── */}
+      <div style={{ paddingLeft: 0, paddingRight: 0 }}>
+
+        {/* Stat cards row — y=205, gap=24, x=356 */}
+        <div
+          className="flex items-center"
+          style={{ gap: 24, marginTop: 145, paddingLeft: 0 }}
+        >
+          <StatCard label="Total earnings" value={`₦${balance.toLocaleString()}`} purple />
+          <StatCard label="Pending earning" value={`₦${pendingEarning.toLocaleString()}`} />
+          <StatCard label="Completed survey" value={`${completedSurveys}`} />
         </div>
 
-        {/* Available surveys */}
-        <div className="flex flex-col gap-4 lg:gap-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[18px] lg:text-[24px] font-semibold text-text-primary">Available Surveys</h2>
-            <Link href="/earner/surveys" className="btn-ghost text-sm flex items-center gap-1">
-              View all <HugeiconsIcon icon={ArrowRight01Icon} size={14}  />
-            </Link>
-          </div>
-
-          <div className="flex flex-col gap-3 lg:gap-4">
-            {RECENT_SURVEYS.map((survey) => (
-              <div
-                key={survey.id}
-                onClick={() => router.push(`/earner/surveys/${survey.id}`)}
-                className="flex items-center justify-between p-4 lg:p-5 bg-white border border-[#F3F4F6] rounded-2xl hover:shadow-card-hover transition-all cursor-pointer group"
+        {/* Main content block — y=387, gap=24 */}
+        <div
+          className="flex flex-col"
+          style={{ gap: 24, marginTop: 24, width: 1017 }}
+        >
+          {/* ── Available Surveys ─────────────────────────────────────── */}
+          <div className="flex flex-col" style={{ gap: 12 }}>
+            {/* Section header: space-between */}
+            <div className="flex items-center justify-between" style={{ width: "100%" }}>
+              {/* "Available Surveys" H3 */}
+              <span
+                style={{
+                  fontFamily: "Geist, sans-serif",
+                  fontWeight: 600,
+                  fontSize: 24,
+                  lineHeight: "1.2em",
+                  letterSpacing: "-0.02em",
+                  color: "#111827",
+                }}
               >
-                <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-[#EDE9FE] flex items-center justify-center flex-shrink-0">
-                    <HugeiconsIcon icon={User02Icon} size={20} className="text-brand-primary" />
-                  </div>
-                  <div className="flex flex-col gap-1 min-w-0">
-                    <h3 className="text-sm lg:text-body font-semibold text-text-primary line-clamp-1">{survey.title}</h3>
-                    <div className="flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-text-secondary">
-                      <span className="flex items-center gap-1"><HugeiconsIcon icon={Clock01Icon} size={11}  /> {survey.duration}</span>
-                      <span className="px-2 py-0.5 bg-[#EDE9FE] text-brand-primary rounded-full text-xs font-medium">
-                        {survey.category}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-                  <div className="text-right hidden sm:block">
-                    <p className="text-[16px] lg:text-[20px] font-bold text-text-primary">₦{survey.reward.toLocaleString()}</p>
-                    <p className="text-xs lg:text-sm text-text-secondary">Reward</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 lg:gap-2 bg-[#EDE9FE] text-brand-primary px-3 py-2 lg:px-4 rounded-xl text-sm lg:text-body font-medium group-hover:bg-brand-primary group-hover:text-white transition-all">
-                    <span className="hidden sm:inline">Start</span> <HugeiconsIcon icon={ArrowRight01Icon} size={14}  />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                Available Surveys
+              </span>
+              {/* View All button: row, padding 16px 12px, rounded-16 */}
+              <Link
+                href="/earner/surveys"
+                className="flex items-center"
+                style={{ padding: "16px 12px", borderRadius: 16, gap: 10 }}
+              >
+                <span
+                  style={{
+                    fontFamily: "Geist, sans-serif",
+                    fontWeight: 400,
+                    fontSize: 16,
+                    lineHeight: "1.2em",
+                    letterSpacing: "-0.02em",
+                    color: "#9F4EF5",
+                  }}
+                >
+                  View All
+                </span>
+                <HugeiconsIcon icon={ArrowRight01Icon} size={24} className="text-[#9F4EF5]" />
+              </Link>
+            </div>
 
-        {/* Recent earnings */}
-        <div className="flex flex-col gap-4 lg:gap-5">
-          <h2 className="text-[18px] lg:text-[24px] font-semibold text-text-primary">Recent Earnings</h2>
-          <div className="grid grid-cols-3 gap-3 lg:gap-4">
-            {[
-              { label: "This week", amount: 2300, change: "+12%" },
-              { label: "This month", amount: 8500, change: "+28%" },
-              { label: "Last month", amount: 4000, change: "" },
-            ].map(({ label, amount, change }) => (
-              <div key={label} className="bg-white rounded-2xl border border-[#F3F4F6] p-3 lg:p-5 flex flex-col gap-1.5 lg:gap-2 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-                <p className="text-xs lg:text-sm text-text-secondary">{label}</p>
-                <p className="text-[16px] lg:text-[24px] font-bold text-text-primary">₦{amount.toLocaleString()}</p>
-                {change && (
-                  <span className="text-xs lg:text-sm text-[#16A34A] font-medium">{change} vs prev.</span>
-                )}
+            {/* Survey cards row: gap=14, fill */}
+            <div
+              className="flex items-center"
+              style={{ gap: 14, alignSelf: "stretch" }}
+            >
+              {AVAILABLE_SURVEYS.map((s) => (
+                <div key={s.id} style={{ flex: 1 }}>
+                  <SurveyCard {...s} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Recent Transactions ───────────────────────────────────── */}
+          <div className="flex flex-col" style={{ gap: 12 }}>
+            {/* Section header */}
+            <div className="flex items-center justify-between" style={{ width: "100%" }}>
+              <span
+                style={{
+                  fontFamily: "Geist, sans-serif",
+                  fontWeight: 600,
+                  fontSize: 24,
+                  lineHeight: "1.2em",
+                  letterSpacing: "-0.02em",
+                  color: "#111827",
+                }}
+              >
+                Recent Transactions
+              </span>
+              <Link
+                href="/earner/wallet"
+                className="flex items-center"
+                style={{ padding: "16px 12px", borderRadius: 16, gap: 10 }}
+              >
+                <span
+                  style={{
+                    fontFamily: "Geist, sans-serif",
+                    fontWeight: 400,
+                    fontSize: 16,
+                    color: "#9F4EF5",
+                  }}
+                >
+                  View All
+                </span>
+                <HugeiconsIcon icon={ArrowRight01Icon} size={24} className="text-[#9F4EF5]" />
+              </Link>
+            </div>
+
+            {/* Transactions table card — white, border E5E7EB, rounded-30, padding 0px 20px 16px */}
+            {isEmpty ? (
+              /* Empty state */
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  background: "#FFFFFF",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 30,
+                  height: 318,
+                  width: "100%",
+                }}
+              >
+                <div
+                  className="flex flex-col items-center"
+                  style={{ gap: 8, textAlign: "center" }}
+                >
+                  <p
+                    style={{
+                      fontFamily: "Geist, sans-serif",
+                      fontWeight: 600,
+                      fontSize: 17,
+                      color: "#111827",
+                    }}
+                  >
+                    No transactions yet
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "Geist, sans-serif",
+                      fontWeight: 400,
+                      fontSize: 11,
+                      color: "#6B7280",
+                      maxWidth: 280,
+                    }}
+                  >
+                    You haven't made any transactions, add funds to your wallet to get started.
+                  </p>
+                </div>
               </div>
-            ))}
+            ) : (
+              <div
+                style={{
+                  background: "#FFFFFF",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 30,
+                  padding: "0 20px 16px",
+                  width: "100%",
+                }}
+              >
+                {/* Table header row */}
+                <div
+                  className="flex items-center justify-between"
+                  style={{
+                    padding: "16px 0 18px",
+                    borderBottom: "1px solid #E5E7EB",
+                    marginBottom: 0,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "Geist, sans-serif",
+                      fontWeight: 600,
+                      fontSize: 24,
+                      lineHeight: "1.2em",
+                      letterSpacing: "-0.02em",
+                      color: "#111827",
+                    }}
+                  >
+                    Transaction History
+                  </span>
+                  <div
+                    className="flex items-center"
+                    style={{
+                      padding: 12,
+                      border: "1px solid #E5E7EB",
+                      borderRadius: 12,
+                      gap: 10,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: "Geist, sans-serif",
+                        fontWeight: 400,
+                        fontSize: 16,
+                        color: "#111827",
+                      }}
+                    >
+                      All Transactions
+                    </span>
+                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                      <path d="M6 9l6 6 6-6" stroke="#111827" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Transaction rows */}
+                {mappedTransactions.map((tx) => (
+                  <TxRow key={tx.id} {...tx} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

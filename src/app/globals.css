@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap');
+/* Geist font is loaded via the 'geist' package in layout.tsx (next/font — no network request) */
 
 @tailwind base;
 @tailwind components;
@@ -26,7 +26,7 @@
 
   body {
     @apply bg-[#FEFEFE] text-[#111827] font-sans;
-    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-geist-sans), 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {

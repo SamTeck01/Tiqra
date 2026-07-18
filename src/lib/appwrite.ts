@@ -1,20 +1,29 @@
 import { Client, Account, Databases, Storage } from "appwrite";
+import { DB_ID, COLLECTIONS } from "./appwrite.config";
+import { mockAccount, mockDatabases } from "./mockApi";
 
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+export { DB_ID, COLLECTIONS };
 
-export const account = new Account(client);
-export const databases = new Databases(client);
-export const storage = new Storage(client);
+const useMock = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
 
-export const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-export const COLLECTIONS = {
-  USERS: process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!,
-  SURVEYS: process.env.NEXT_PUBLIC_APPWRITE_SURVEYS_COLLECTION_ID!,
-  RESPONSES: process.env.NEXT_PUBLIC_APPWRITE_RESPONSES_COLLECTION_ID!,
-  TRANSACTIONS: process.env.NEXT_PUBLIC_APPWRITE_TRANSACTIONS_COLLECTION_ID!,
-  WALLETS: process.env.NEXT_PUBLIC_APPWRITE_WALLETS_COLLECTION_ID!,
-};
+let client: Client;
+let realAccount: Account;
+let realDatabases: Databases;
+let realStorage: Storage;
 
-export default client;
+if (!useMock) {
+  client = new Client()
+    .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+    .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
+
+  realAccount = new Account(client);
+  realDatabases = new Databases(client);
+  realStorage = new Storage(client);
+}
+
+// We use type assertion to allow swapping the real Appwrite client with our mock
+export const account = useMock ? (mockAccount as unknown as Account) : realAccount!;
+export const databases = useMock ? (mockDatabases as unknown as Databases) : realDatabases!;
+export const storage = useMock ? ({} as Storage) : realStorage!; // Mock storage later if needed
+
+export default client!;

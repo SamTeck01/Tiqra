@@ -1,237 +1,172 @@
 "use client";
-import { HugeiconsIcon } from "@hugeicons/react";
+
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSurveyStore } from "@/store/survey.store";
-import { ArrowLeft01Icon, UserGroupIcon, Clock01Icon, ChartIncreaseIcon, ChartBarBigIcon, FlashIcon, RefreshIcon, CheckmarkCircle01Icon, RotateLeft01Icon, CancelCircleIcon, ArrowUpRight01Icon, Activity01Icon } from "@hugeicons/core-free-icons";
-import { formatNairaShort } from "@/lib/utils";
+import { databases } from "@/lib/appwrite";
+import { DB_ID, COLLECTIONS } from "@/lib/appwrite.config";
+import { Idea } from "@/lib/types";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowLeft01Icon, ChartBarLineIcon, Location01Icon, UserGroupIcon, Time01Icon, FlashIcon, Wallet01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
-
-const LIVE_RESPONSES = [
-  { id: 1, time: "2 min ago", quality: 94, sentiment: "positive" },
-  { id: 2, time: "5 min ago", quality: 88, sentiment: "positive" },
-  { id: 3, time: "8 min ago", quality: 72, sentiment: "neutral" },
-  { id: 4, time: "12 min ago", quality: 91, sentiment: "positive" },
-  { id: 5, time: "18 min ago", quality: 45, sentiment: "negative" },
-  { id: 6, time: "22 min ago", quality: 83, sentiment: "positive" },
-];
-
-const DEMAND_DATA = [12, 28, 45, 52, 61, 68, 72];
+import TopBar from "@/components/layout/TopBar";
 
 export default function LiveTrackPage() {
-  const { id } = useParams();
+  const { id } = useParams() as { id: string };
   const router = useRouter();
-  const { activeSurvey, fetchSurveyById } = useSurveyStore();
-  const [lastRefresh, setLastRefresh] = useState(new Date());
-  const [refreshing, setRefreshing] = useState(false);
+  const [idea, setIdea] = useState<Idea | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Mock real-time progression
+  const [responses, setResponses] = useState(0);
 
   useEffect(() => {
-    if (id) fetchSurveyById(id as string);
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(() => {
-      setLastRefresh(new Date());
-    }, 30000);
-    return () => clearInterval(interval);
+    async function fetchIdea() {
+      try {
+        const doc = await databases.getDocument(DB_ID, COLLECTIONS.SURVEYS, id);
+        const fetchedIdea = doc as unknown as Idea;
+        setIdea(fetchedIdea);
+        setResponses(fetchedIdea.respondentsCompleted);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchIdea();
   }, [id]);
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLastRefresh(new Date());
-    setRefreshing(false);
-  };
+  useEffect(() => {
+    // Simulate real-time responses coming in if the idea is live
+    if (idea && idea.status === "live") {
+      const interval = setInterval(() => {
+        setResponses((prev) => {
+          if (prev >= idea.respondentsRequired) {
+            clearInterval(interval);
+            return idea.respondentsRequired;
+          }
+          // Randomly add 1 or 2 responses every few seconds
+          return prev + Math.floor(Math.random() * 3);
+        });
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [idea]);
 
-  const progress = activeSurvey
-    ? Math.min(100, (activeSurvey.respondentsCompleted / activeSurvey.respondentsRequired) * 100)
-    : 65;
+  if (loading || !idea) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <TopBar title="Live Tracking..." subtitle="" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-[#10B981] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
 
-  const demandSignal = 72;
-  const verdictProjected: "Proceed" | "Pivot" | "Kill" =
-    demandSignal >= 65 ? "Proceed" : demandSignal >= 40 ? "Pivot" : "Kill";
-
-  const verdictConfig = {
-    Proceed: { color: "#16A34A", bg: "#DCFCE7", icon: CheckmarkCircle01Icon, label: "Trending: Proceed" },
-    Pivot: { color: "#D97706", bg: "#FEF3C7", icon: RotateLeft01Icon, label: "Trending: Pivot" },
-    Kill: { color: "#DC2626", bg: "#FEE2E2", icon: CancelCircleIcon, label: "Trending: Kill" },
-  };
-  const vc = verdictConfig[verdictProjected];
+  const progressPct = Math.min(100, (responses / idea.respondentsRequired) * 100);
 
   return (
-    <div className="ml-[324px] flex flex-col min-h-screen bg-[#FEFEFE]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-8 py-5 border-b border-[#F3F4F6]">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  />
-          </button>
-          <div>
-            <h1 className="text-[24px] font-semibold text-text-primary">
-              {activeSurvey?.title || "Live Survey Track"}
-            </h1>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse" />
-              <span className="text-sm text-[#16A34A] font-medium">Live</span>
-              <span className="text-sm text-text-secondary">·</span>
-              <span className="text-sm text-text-secondary">
-                Updated {lastRefresh.toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            </div>
+    <div className="flex flex-col min-h-screen pb-24 lg:pb-8">
+      {/* Dynamic TopBar */}
+      <div className="flex items-center gap-4 py-4 px-4 lg:px-8 border-b border-[#F3F4F6] bg-white sticky top-0 z-10">
+        <button onClick={() => router.push(`/founder/ideas/${id}`)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8F9FC] text-text-secondary hover:text-text-primary transition-colors">
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
+        </button>
+        <div>
+          <h1 className="text-[20px] font-semibold text-text-primary">Live Track: {idea.title}</h1>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="flex items-center justify-center w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
+            <p className="text-xs text-[#10B981] font-medium uppercase tracking-wider">Collecting Responses</p>
           </div>
         </div>
-        <button
-          onClick={handleRefresh}
-          className={cn("btn-secondary gap-2", refreshing && "opacity-70")}
-        >
-          <HugeiconsIcon icon={RefreshIcon} size={16} className={cn(refreshing && "animate-spin")}  />
-          Refresh
-        </button>
+        <div className="ml-auto">
+          <button className="btn-secondary py-2 px-4 text-sm text-[#DC2626] border-[#FEE2E2] hover:bg-[#FEE2E2] hover:text-[#DC2626]">
+            Pause Survey
+          </button>
+        </div>
       </div>
 
-      <div className="px-8 py-8 flex flex-col gap-8 max-w-5xl">
-        {/* Live metrics strip */}
-        <div className="grid grid-cols-4 gap-5">
-          {[
-            { icon: UserGroupIcon, label: "Responses", value: `${activeSurvey?.respondentsCompleted || 32}/${activeSurvey?.respondentsRequired || 50}`, sub: `${Math.round(progress)}% complete` },
-            { icon: Activity01Icon, label: "Demand Signal", value: `${demandSignal}%`, sub: "of respondents interested" },
-            { icon: Clock01Icon, label: "Avg. Time", value: "3m 42s", sub: "per response" },
-            { icon: ChartBarBigIcon, label: "Quality Score", value: "82%", sub: "avg. response quality" },
-          ].map(({ icon: Icon, label, value, sub }) => (
-            <div key={label} className="tiqra-card-sm flex flex-col gap-2">
-              <div className="flex items-center gap-2 text-text-secondary text-sm">
-                <HugeiconsIcon icon={Icon} size={16} />
-                <span>{label}</span>
-              </div>
-              <span className="text-[28px] font-bold text-text-primary">{value}</span>
-              <span className="text-sm text-text-secondary">{sub}</span>
+      <div className="page-content mt-6 flex flex-col gap-6 max-w-5xl">
+        {/* Top Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-text-secondary mb-2">
+              <HugeiconsIcon icon={UserGroupIcon} size={18} />
+              <span className="text-sm font-medium">Responses</span>
             </div>
-          ))}
+            <p className="text-3xl font-bold text-text-primary">{responses}</p>
+            <p className="text-xs text-text-muted mt-1">Target: {idea.respondentsRequired}</p>
+          </div>
+          
+          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-text-secondary mb-2">
+              <HugeiconsIcon icon={Time01Icon} size={18} />
+              <span className="text-sm font-medium">Avg. Time</span>
+            </div>
+            <p className="text-3xl font-bold text-text-primary">2m 14s</p>
+            <p className="text-xs text-[#10B981] mt-1 font-medium">-12s vs average</p>
+          </div>
+
+          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-text-secondary mb-2">
+              <HugeiconsIcon icon={Location01Icon} size={18} />
+              <span className="text-sm font-medium">Top Location</span>
+            </div>
+            <p className="text-3xl font-bold text-text-primary truncate">Lagos</p>
+            <p className="text-xs text-text-muted mt-1">45% of total responses</p>
+          </div>
+
+          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-text-secondary mb-2">
+              <HugeiconsIcon icon={Wallet01Icon} size={18} />
+              <span className="text-sm font-medium">Est. Cost</span>
+            </div>
+            <p className="text-3xl font-bold text-text-primary">₦{responses * 100}</p>
+            <p className="text-xs text-text-muted mt-1">At ₦100 per response</p>
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between text-sm text-text-secondary">
-            <span>Survey Progress</span>
-            <span>{activeSurvey?.respondentsCompleted || 32} of {activeSurvey?.respondentsRequired || 50} responses collected</span>
+        {/* Progress Bar Container */}
+        <div className="bg-white border border-[#F3F4F6] p-6 lg:p-8 rounded-2xl flex flex-col gap-4">
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">Overall Progress</h3>
+              <p className="text-sm text-text-secondary">Watch your audience validate your idea in real-time.</p>
+            </div>
+            <span className="text-xl font-bold text-[#10B981]">{Math.floor(progressPct)}%</span>
           </div>
-          <div className="h-4 rounded-full bg-[#EDE9FE] overflow-hidden">
+          <div className="h-4 bg-[#F3F4F6] rounded-full overflow-hidden">
             <div
-              className="h-full bg-brand-primary rounded-full transition-all duration-1000"
-              style={{ width: `${progress}%` }}
+              className="h-full bg-[#10B981] transition-all duration-1000 ease-out"
+              style={{ width: `${progressPct}%` }}
             />
           </div>
         </div>
 
-        {/* Projected verdict + demand chart */}
-        <div className="grid grid-cols-2 gap-6">
-          {/* Verdict projection */}
-          <div className={cn("p-6 rounded-2xl flex flex-col gap-4")} style={{ backgroundColor: vc.bg }}>
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={FlashIcon} size={16} style={{ color: vc.color }}  />
-              <span className="text-sm font-medium" style={{ color: vc.color }}>AI Early Projection</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <HugeiconsIcon icon={vc.icon} size={40} style={{ color: vc.color }} />
-              <div>
-                <p className="text-[28px] font-bold" style={{ color: vc.color }}>{vc.label}</p>
-                <p className="text-sm" style={{ color: vc.color, opacity: 0.8 }}>
-                  Based on {activeSurvey?.respondentsCompleted || 32} responses so far
-                </p>
-              </div>
-            </div>
-            <p className="text-sm" style={{ color: vc.color, opacity: 0.7 }}>
-              * Final verdict generated when 100% responses collected
-            </p>
-          </div>
-
-          {/* Demand trend chart (simplified) */}
-          <div className="tiqra-card flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-body font-semibold text-text-primary">Demand Signal Trend</h3>
-              <HugeiconsIcon icon={ChartIncreaseIcon} size={20} className="text-[#16A34A]"  />
-            </div>
-            <div className="flex items-end gap-1.5 h-24">
-              {DEMAND_DATA.map((val, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "flex-1 rounded-t-sm transition-all",
-                    i === DEMAND_DATA.length - 1 ? "bg-brand-primary" : "bg-[#EDE9FE]"
-                  )}
-                  style={{ height: `${val}%` }}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-text-secondary">
-              <span>Start</span>
-              <span>Now</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Live responses feed */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[24px] font-semibold text-text-primary">Live Response Feed</h2>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse" />
-              <span className="text-sm text-[#16A34A] font-medium">Updating live</span>
+        {/* Mock Charts Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white border border-[#F3F4F6] p-6 rounded-2xl h-[300px] flex flex-col">
+            <h3 className="text-body font-semibold text-text-primary mb-4">Responses Over Time</h3>
+            <div className="flex-1 border-b border-l border-[#E5E7EB] relative mt-4 ml-4 mb-6">
+              {/* Fake Line Chart */}
+              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+                <path d="M0,100 L20,80 L40,85 L60,40 L80,20 L100,5" fill="none" stroke="#10B981" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+              </svg>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {LIVE_RESPONSES.map((resp) => (
-              <div
-                key={resp.id}
-                className="flex items-center justify-between p-4 bg-white border border-[#F3F4F6] rounded-xl hover:shadow-card-hover transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#EDE9FE] flex items-center justify-center text-sm font-semibold text-brand-primary flex-shrink-0">
-                    #{resp.id}
-                  </div>
-                  <div>
-                    <p className="text-body font-medium text-text-primary">Anonymous Respondent</p>
-                    <p className="text-sm text-text-secondary">{resp.time}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={cn(
-                      "text-sm px-3 py-1 rounded-full font-medium",
-                      resp.quality >= 80 ? "bg-[#DCFCE7] text-[#16A34A]" :
-                        resp.quality >= 60 ? "bg-[#FEF3C7] text-[#D97706]" :
-                          "bg-[#FEE2E2] text-[#DC2626]"
-                    )}
-                  >
-                    {resp.quality}% quality
-                  </span>
-                  <HugeiconsIcon icon={ArrowUpRight01Icon} size={16} className="text-text-secondary"  />
+          <div className="bg-white border border-[#F3F4F6] p-6 rounded-2xl h-[300px] flex flex-col">
+            <h3 className="text-body font-semibold text-text-primary mb-4">Sentiment Analysis</h3>
+            <div className="flex-1 flex items-center justify-center">
+              {/* Fake Doughnut Chart */}
+              <div className="relative w-40 h-40 rounded-full border-[16px] border-[#10B981] border-r-[#F59E0B] border-b-[#EF4444] transform rotate-45 flex items-center justify-center shadow-inner">
+                <div className="absolute inset-0 bg-white rounded-full m-4 flex flex-col items-center justify-center -rotate-45">
+                   <HugeiconsIcon icon={FlashIcon} size={24} className="text-[#10B981] mb-1" />
+                   <span className="text-sm font-bold">Positive</span>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-
-        {/* Key insights (early) */}
-        <div className="tiqra-card flex flex-col gap-4">
-          <h3 className="text-body font-semibold text-text-primary">Early Insights</h3>
-          <div className="flex flex-col gap-3">
-            {[
-              "68% of respondents experience this problem at least weekly",
-              "Top objection so far: price point concerns (mentioned by 3 respondents)",
-              "Strongest interest from respondents aged 25–35 in Lagos",
-            ].map((insight, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-brand-primary mt-2 flex-shrink-0" />
-                <p className="text-body text-text-secondary">{insight}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-text-muted border-t border-[#F3F4F6] pt-3">
-            Full AI report available when survey completes
-          </p>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ViewIcon, ViewOffIcon, ArrowRight01Icon, Loading03Icon } from "@hugeicons/core-free-icons";;
+import { ViewIcon, ViewOffIcon, ArrowRight01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,18 +27,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-[#FEFEFE]">
-      {/* Left panel — hidden on mobile */}
       <div
         className="hidden lg:flex w-[594px] flex-shrink-0 rounded-[40px] m-3 flex-col relative overflow-hidden"
         style={{ background: "linear-gradient(136deg, #9F4EF5 0%, #E5CAFC 100%)" }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-white text-center px-12">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6 border border-white/20">
-              <span className="text-white font-bold text-3xl">T</span>
+            {/* Tiqra Logo Mark + wordmark (white SVG) */}
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <svg width="180" height="54" viewBox="0 0 180 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 42L24 12L42 42H30L24 30L18 42H6Z" fill="white" fillOpacity="0.95" />
+                <path d="M18 42L24 30L30 42" fill="white" fillOpacity="0.5" />
+                <text x="54" y="39" fontFamily="inherit" fontSize="33" fontWeight="700" fill="white" letterSpacing="-0.8">Tiqra</text>
+              </svg>
             </div>
             <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Validate ideas.<br />Make smarter<br />decisions.
+              Validate ideas.<br />Make smarter<br />decision
             </h1>
             <p className="text-white/70 text-lg">
               Real feedback from real people,<br />powered by AI truth-layer
@@ -50,16 +54,17 @@ export default function LoginPage() {
       {/* Right panel — full width on mobile */}
       <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-20 py-10 lg:py-12 w-full max-w-[700px] mx-auto">
         {/* Mobile logo */}
-        <div className="flex items-center gap-3 mb-8 lg:hidden">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #9F4EF5, #7C3ACD)" }}>
-            <span className="text-white font-bold text-lg">T</span>
-          </div>
-          <span className="text-[22px] font-bold text-text-primary tracking-tight">Tiqra</span>
+        <div className="flex items-center gap-2 mb-8 lg:hidden">
+          <svg width="120" height="36" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 28L12 8L22 28H16L12 20L8 28H2Z" fill="#9F4EF5" fillOpacity="0.95" />
+            <path d="M8 28L12 20L16 28" fill="#9F4EF5" fillOpacity="0.5" />
+            <text x="30" y="26" fontFamily="inherit" fontSize="22" fontWeight="700" fill="#111827" letterSpacing="-0.5">Tiqra</text>
+          </svg>
         </div>
 
         <div className="mb-8">
           <h1 className="text-[28px] lg:text-[32px] font-semibold text-text-primary leading-[150%] tracking-[-0.03em]">
-            Welcome back
+            Welcome Back
           </h1>
           <p className="text-base lg:text-lg text-text-primary mt-1">
             <span className="text-text-secondary">Don't have an account?</span>{" "}
@@ -77,12 +82,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="tiqra-label">Email Address</label>
+            <label className="tiqra-label">Email address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="example@gmail.com"
               className="tiqra-input"
               required
             />
@@ -92,7 +97,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-between mb-2">
               <label className="tiqra-label mb-0">Password</label>
               <Link href="/auth/forgot-password" className="text-sm text-brand-primary hover:underline">
-                Forgot password?
+                Forget password?
               </Link>
             </div>
             <div className="relative">
@@ -122,7 +127,7 @@ export default function LoginPage() {
             {loading ? (
               <HugeiconsIcon icon={Loading03Icon} size={20} className="animate-spin"  />
             ) : (
-              <>Sign in <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>
+              <>Login <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>
             )}
           </button>
         </form>
@@ -130,16 +135,20 @@ export default function LoginPage() {
         <div className="flex flex-col gap-3 mt-6">
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-[#E5E7EB]" />
-            <span className="text-sm lg:text-body text-text-secondary">Or continue with</span>
+            <span className="text-sm lg:text-body text-text-secondary uppercase">OR</span>
             <div className="h-px flex-1 bg-[#E5E7EB]" />
           </div>
           <button className="btn-secondary w-full justify-center gap-3">
             <svg width="20" height="20" viewBox="0 0 20 20">
               <path d="M18.77 8.2H10.18v3.46h4.94c-.46 2.11-2.26 3.46-4.94 3.46-3.04 0-5.49-2.46-5.49-5.5s2.45-5.5 5.49-5.5c1.39 0 2.61.47 3.57 1.38l2.54-2.54C14.83 1.96 12.63 1 10.18 1 5.12 1 1 5.12 1 10.18s4.12 9.18 9.18 9.18c5.24 0 8.72-3.68 8.72-8.88 0-.59-.06-1.18-.13-1.28z" fill="#4285F4" />
             </svg>
-            Continue with Google
+            Continue with google
           </button>
         </div>
+
+        <p className="text-body text-text-primary text-center mt-6">
+          By signing in, you agree to TIQRA’s <Link href="/terms" className="text-text-secondary hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-text-secondary hover:underline">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   );

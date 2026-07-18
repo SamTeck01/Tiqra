@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserIcon, Notification01Icon, LockIcon, Logout01Icon, ArrowRight01Icon, CheckmarkCircle01Icon, Camera01Icon, Mail01Icon, SmartPhone01Icon, Location01Icon, Building04Icon, SecurityLockIcon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";;
+import { UserIcon, Notification01Icon, LockIcon, Logout01Icon, ArrowRight01Icon, CheckmarkCircle01Icon, Camera01Icon, Mail01Icon, SmartPhone01Icon, Location01Icon, Building04Icon, SecurityLockIcon, ViewIcon, ViewOffIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils";
 import TopBar from "@/components/layout/TopBar";
@@ -19,7 +20,8 @@ const NOTIFICATION_SETTINGS = [
 ];
 
 export default function FounderSettingsPage() {
-  const { user, logout } = useAuthStore();
+  const router = useRouter();
+  const { user, logout, switchRole } = useAuthStore();
   const [section, setSection] = useState<SettingsSection>("profile");
   const [saved, setSaved] = useState(false);
   const [notifications, setNotifications] = useState(NOTIFICATION_SETTINGS);
@@ -127,6 +129,17 @@ export default function FounderSettingsPage() {
           >
             <HugeiconsIcon icon={Logout01Icon} size={20}  />
             Sign Out
+          </button>
+
+          <button
+            onClick={async () => {
+              if (user) await switchRole("earner");
+              router.push("/earner/dashboard");
+            }}
+            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-body text-brand-primary hover:bg-[#EDE9FE] transition-all mt-4 border border-brand-primary/20"
+          >
+            <HugeiconsIcon icon={UserIcon} size={20}  />
+            Switch to Earner
           </button>
         </div>
 
@@ -266,10 +279,19 @@ export default function FounderSettingsPage() {
           )}
 
           {/* Mobile: Logout */}
-          <div className="mt-4 lg:hidden">
+          <div className="mt-4 lg:hidden flex flex-col gap-3">
+            <button
+              onClick={async () => {
+                if (user) await switchRole("earner");
+                router.push("/earner/dashboard");
+              }}
+              className="flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl text-body text-brand-primary hover:bg-[#EDE9FE] transition-all w-full border border-brand-primary/20"
+            >
+              <HugeiconsIcon icon={UserIcon} size={20}  /> Switch to Earner
+            </button>
             <button
               onClick={logout}
-              className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-body text-[#DC2626] hover:bg-[#FEE2E2] transition-all w-full border border-[#FEE2E2]"
+              className="flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl text-body text-[#DC2626] hover:bg-[#FEE2E2] transition-all w-full border border-[#FEE2E2]"
             >
               <HugeiconsIcon icon={Logout01Icon} size={20}  /> Sign Out
             </button>

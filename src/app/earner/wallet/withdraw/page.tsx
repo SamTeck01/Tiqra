@@ -1,374 +1,598 @@
 "use client";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft01Icon, ArrowRight01Icon, AlertCircleIcon, CheckmarkCircle01Icon, CancelCircleIcon, Building04Icon, Loading02Icon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/auth.store";
+import { useWalletStore } from "@/store/wallet.store";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  CheckmarkCircle01Icon,
+  CancelCircleIcon,
+  Loading02Icon,
+} from "@hugeicons/core-free-icons";
 
-type Step = "amount" | "bank" | "confirm" | "processing" | "success" | "failed";
+type Step = "amount" | "review" | "processing" | "success" | "failed";
 
-const NIGERIAN_BANKS = [
-  "Access Bank", "GTBank", "First Bank", "Zenith Bank", "UBA",
-  "Fidelity Bank", "Union Bank", "Sterling Bank", "Wema Bank",
-  "Keystone Bank", "Polaris Bank", "Stanbic IBTC", "Citibank Nigeria",
-  "Heritage Bank", "Jaiz Bank", "Kuda Bank", "OPay", "PalmPay", "Moniepoint",
+const QUICK_AMOUNTS = [10000, 25000, 50000, 100000];
+
+// ─── Saved bank accounts (mock) ───────────────────────────────────────────────
+const SAVED_ACCOUNTS = [
+  { id: "a1", bank: "GTBank",    masked: "**** **** 4521", isDefault: true  },
+  { id: "a2", bank: "First Bank", masked: "**** **** 8843", isDefault: false },
 ];
 
-const QUICK_AMOUNTS = [1000, 2000, 5000, 10000, 20000];
+function ShieldCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(22, 163, 74, 0.1)"/>
+      <path d="m9 11 2 2 4-4"/>
+    </svg>
+  );
+}
 
+function WarningCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" fill="rgba(220, 38, 38, 0.1)"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+  );
+}
+
+// ─── Bank row ─────────────────────────────────────────────────────────────────
+function AccountCard({
+  bank,
+  masked,
+  isDefault,
+  selected,
+  onSelect,
+}: {
+  bank: string;
+  masked: string;
+  isDefault: boolean;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      onClick={onSelect}
+      className="flex items-center justify-between cursor-pointer"
+      style={{
+        padding: "16px 24px",
+        background: "#FFFFFF",
+        border: `1px solid ${selected ? "#9F4EF5" : "#E5E7EB"}`,
+        borderRadius: 24,
+        gap: 12,
+      }}
+    >
+      {/* Bank logo placeholder + name + masked */}
+      <div className="flex items-center" style={{ gap: 12 }}>
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{ width: 48, height: 48, background: "#EDE9FE", borderRadius: 24 }}
+        >
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 700, fontSize: 16, color: "#9F4EF5" }}>
+            {bank.charAt(0)}
+          </span>
+        </div>
+        <div className="flex flex-col" style={{ gap: 2 }}>
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 16, color: "#111827" }}>
+            {bank}
+          </span>
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 14, color: "#6B7280" }}>
+            {masked}
+          </span>
+        </div>
+      </div>
+
+      {/* Right: default pill + radio */}
+      <div className="flex items-center" style={{ gap: 12 }}>
+        {isDefault && (
+          <span
+            style={{
+              padding: "4px 12px",
+              background: "#EDE9FE",
+              borderRadius: 999,
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 12,
+              color: "#9F4EF5",
+            }}
+          >
+            Default
+          </span>
+        )}
+        {/* Custom Figma Radio: 40x40 outer circle, 30x30 inner circle */}
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 999,
+            border: `2px solid ${selected ? "#9F4EF5" : "#E5E7EB"}`,
+            background: "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {selected && (
+            <div 
+              style={{ 
+                width: 30, 
+                height: 30, 
+                background: "#9F4EF5", 
+                borderRadius: 999 
+              }} 
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function EarnerWithdrawPage() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const { wallet, fetchWallet, requestWithdrawal } = useWalletStore();
+
   const [step, setStep] = useState<Step>("amount");
   const [amount, setAmount] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [resolving, setResolving] = useState(false);
-  const balance = 12500;
+  const [selectedAccount, setSelectedAccount] = useState(SAVED_ACCOUNTS[0].id);
+  const [referenceId, setReferenceId] = useState("");
 
-  const resolveAccount = async () => {
-    if (accountNumber.length === 10 && bankName) {
-      setResolving(true);
-      await new Promise((r) => setTimeout(r, 1200));
-      setAccountName("AISHA BELLO");
-      setResolving(false);
+  useEffect(() => {
+    if (user?.$id) {
+      fetchWallet(user.$id);
+    }
+    // Generate a reference ID once
+    setReferenceId(`WD-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}-${Math.floor(100000 + Math.random() * 900000)}`);
+  }, [user?.$id]);
+
+  const balance = wallet?.balance ?? 7000;
+  const amtNum  = Number(amount.replace(/[^0-9]/g, "") || 0);
+
+  const handleContinue = async () => {
+    if (step === "amount") { 
+      setStep("review"); 
+      return; 
+    }
+    if (step === "review") {
+      setStep("processing");
+      await new Promise((r) => setTimeout(r, 2000));
+      if (amtNum > balance) {
+        setStep("failed");
+      } else {
+        try {
+          const account = SAVED_ACCOUNTS.find((a) => a.id === selectedAccount);
+          await requestWithdrawal(user?.$id || "", amtNum, { 
+            bank: account?.bank, 
+            masked: account?.masked 
+          });
+        } catch (e) {
+          console.error(e);
+        }
+        setStep("success");
+      }
+      return;
     }
   };
 
-  const handleConfirm = async () => {
-    setStep("processing");
-    await new Promise((r) => setTimeout(r, 2500));
-    // Simulate 90% success
-    setStep(Math.random() > 0.1 ? "success" : "failed");
-  };
+  const account = SAVED_ACCOUNTS.find((a) => a.id === selectedAccount);
+  const formattedDate = new Date().toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }) + ", " + new Date().toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  const amtNum = Number(amount || 0);
-  const canContinueAmount = amtNum >= 1000 && amtNum <= balance;
-  const canContinueBank = bankName && accountNumber.length === 10 && accountName;
-
-  // ── Processing ──────────────────────────────────────────────────────────────
-  if (step === "processing") {
-    return (
-      <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center gap-8">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative w-24 h-24">
-            <div className="w-24 h-24 rounded-full border-4 border-[#EDE9FE] border-t-brand-primary animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <HugeiconsIcon icon={Building04Icon} size={32} className="text-brand-primary"  />
-            </div>
-          </div>
-          <div className="text-center">
-            <h1 className="text-[32px] font-semibold text-text-primary">Processing Withdrawal</h1>
-            <p className="text-lg text-text-secondary mt-2">
-              Sending ₦{amtNum.toLocaleString()} to {bankName}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-2.5 h-2.5 rounded-full bg-brand-primary animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Success ──────────────────────────────────────────────────────────────────
+  /* ── Success Screen (Figma 608:815) ────────────────────────────────────── */
   if (step === "success") {
     return (
-      <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
-        <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
-          <div className="w-28 h-28 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={56} className="text-[#16A34A]"  />
+      <div className="flex flex-col items-center justify-center min-h-[80vh] py-12" style={{ gap: 32 }}>
+        <div className="flex flex-col items-center text-center" style={{ gap: 24, maxWidth: 584 }}>
+          {/* Green checkmark outer bg 150x150 */}
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 150, height: 150, background: "rgba(22, 163, 74, 0.1)", borderRadius: 999 }}
+          >
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={72} className="text-[#16A34A]" />
           </div>
-          <div>
-            <h1 className="text-[32px] font-bold text-text-primary">Withdrawal Initiated!</h1>
-            <p className="text-body text-text-secondary mt-2">
-              ₦{amtNum.toLocaleString()} is on its way to your {bankName} account.
-              It should arrive within 24 hours.
+          <div className="flex flex-col items-center" style={{ gap: 8 }}>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 32, color: "#111827" }}>
+              Withdrawal Successful!
+            </h2>
+            <p style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 18, color: "#6B7280" }}>
+              Your money has been sent successfully.
             </p>
-          </div>
-
-          {/* Summary card */}
-          <div className="w-full bg-[#F8F9FC] rounded-2xl p-5 flex flex-col gap-3 text-left">
-            {[
-              { label: "Amount", value: `₦${amtNum.toLocaleString()}` },
-              { label: "Bank", value: bankName },
-              { label: "Account Number", value: accountNumber },
-              { label: "Account Name", value: accountName },
-              { label: "Expected arrival", value: "Within 24 hours" },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between text-body">
-                <span className="text-text-secondary">{label}</span>
-                <span className="text-text-primary font-medium">{value}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-3 w-full">
-            <Link href="/earner/wallet" className="btn-primary w-full justify-center">
-              Back to Wallet
-            </Link>
-            <Link href="/earner/surveys" className="btn-secondary w-full justify-center">
-              Find More Surveys
-            </Link>
           </div>
         </div>
-      </div>
-    );
-  }
 
-  // ── Failed ──────────────────────────────────────────────────────────────────
-  if (step === "failed") {
-    return (
-      <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
-        <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
-          <div className="w-28 h-28 rounded-full bg-[#FEE2E2] flex items-center justify-center">
-            <HugeiconsIcon icon={CancelCircleIcon} size={56} className="text-[#DC2626]"  />
-          </div>
-          <div>
-            <h1 className="text-[32px] font-bold text-text-primary">Withdrawal Failed</h1>
-            <p className="text-body text-text-secondary mt-2">
-              We couldn't process your withdrawal. Your funds are safe and have not been deducted.
-            </p>
-          </div>
-
-          <div className="w-full flex items-start gap-3 p-4 bg-[#FEE2E2] rounded-xl text-left">
-            <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-[#DC2626] flex-shrink-0 mt-0.5"  />
-            <p className="text-sm text-[#DC2626]">
-              Common reasons: incorrect account details, bank network issues, or system maintenance.
-              Please try again.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 w-full">
-            <button onClick={() => setStep("amount")} className="btn-primary w-full justify-center">
-              Try Again
-            </button>
-            <Link href="/earner/wallet" className="btn-secondary w-full justify-center">
-              Back to Wallet
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="ml-[324px] flex flex-col min-h-screen bg-[#FEFEFE]">
-      {/* Header */}
-      <div className="flex items-center gap-4 px-8 py-5 border-b border-[#F3F4F6]">
-        <button
-          onClick={() => step === "amount" ? router.back() : setStep(step === "confirm" ? "bank" : "amount")}
-          className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
+        {/* Info card (background color secondary #F8F9FC, borderRadius 30px) */}
+        <div
+          className="flex flex-col"
+          style={{
+            width: 536,
+            padding: 24,
+            background: "#F8F9FC",
+            border: "1px solid #E5E7EB",
+            borderRadius: 30,
+            gap: 16,
+          }}
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  /> Back
-        </button>
-        <div className="flex-1">
-          <h1 className="text-[24px] font-semibold text-text-primary">Withdraw Funds</h1>
-        </div>
-        {/* Step indicator */}
-        <div className="flex items-center gap-2">
-          {(["amount", "bank", "confirm"] as Step[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold",
-                step === s ? "bg-brand-primary text-white" :
-                  (["amount", "bank", "confirm"].indexOf(step) > i) ? "bg-[#DCFCE7] text-[#16A34A]" :
-                    "bg-[#F3F4F6] text-text-secondary"
-              )}>
-                {(["amount", "bank", "confirm"].indexOf(step) > i) ? "✓" : i + 1}
-              </div>
-              {i < 2 && <div className={cn("w-8 h-px", (["amount", "bank", "confirm"].indexOf(step) > i) ? "bg-brand-primary" : "bg-[#E5E7EB]")} />}
+          {[
+            { label: "Amount", value: `₦${amtNum.toLocaleString()}.00` },
+            { label: "Bank", value: `${account?.bank} ${account?.masked}` },
+            { label: "Reference ID", value: referenceId },
+            { label: "Date & Time", value: formattedDate },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between" style={{ padding: "12px 0", borderBottom: label === "Date & Time" ? "none" : "1px solid #E5E7EB" }}>
+              <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>{label}</span>
+              <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 500, fontSize: 18, color: "#111827", textAlign: "right" }}>{value}</span>
             </div>
           ))}
         </div>
+
+        {/* Green warning/status banner */}
+        <div
+          className="flex items-center"
+          style={{
+            width: 568,
+            padding: "16px 32px",
+            background: "#ECFDF5",
+            borderRadius: 15,
+            gap: 16,
+          }}
+        >
+          <ShieldCheckIcon className="text-[#16A34A] flex-shrink-0" />
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#16A34A" }}>
+            The amount should reflect in your account within 5-10 minutes
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center" style={{ gap: 16 }}>
+          <button
+            onClick={() => router.push("/earner/wallet")}
+            style={{
+              padding: "16px 32px",
+              background: "#9F4EF5",
+              borderRadius: 12,
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 18,
+              color: "#FFFFFF",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Back to Wallet
+          </button>
+          <button
+            onClick={() => router.push("/earner/wallet")}
+            style={{
+              padding: "16px 32px",
+              background: "#F8F9FC",
+              border: "1px solid #E5E7EB",
+              borderRadius: 12,
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 18,
+              color: "#111827",
+              cursor: "pointer",
+            }}
+          >
+            View Transaction
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Failure Screen (Figma 608:971) ────────────────────────────────────── */
+  if (step === "failed") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] py-12" style={{ gap: 32 }}>
+        <div className="flex flex-col items-center text-center" style={{ gap: 24, maxWidth: 584 }}>
+          {/* Red warning outer bg 150x150 */}
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 150, height: 150, background: "rgba(255, 223, 223, 0.4)", borderRadius: 999 }}
+          >
+            <HugeiconsIcon icon={CancelCircleIcon} size={72} className="text-[#DC2626]" />
+          </div>
+          <div className="flex flex-col items-center" style={{ gap: 8 }}>
+            <h2 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 32, color: "#111827" }}>
+              Withdrawal Failed
+            </h2>
+            <p style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 18, color: "#6B7280" }}>
+              We couldn’t process your withdrawal.
+            </p>
+          </div>
+        </div>
+
+        {/* Info card (background color secondary #FFDFDF with opacity, borderRadius 30px) */}
+        <div
+          className="flex flex-col"
+          style={{
+            width: 536,
+            padding: 24,
+            background: "rgba(255, 223, 223, 0.3)",
+            border: "1px solid #FFC5C5",
+            borderRadius: 30,
+            gap: 16,
+          }}
+        >
+          {[
+            { label: "Amount", value: `₦${amtNum.toLocaleString()}.00` },
+            { label: "Bank", value: `${account?.bank} ${account?.masked}` },
+            { label: "Reference ID", value: referenceId },
+            { label: "Date & Time", value: formattedDate },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between" style={{ padding: "12px 0", borderBottom: label === "Date & Time" ? "none" : "1px solid #FFC5C5" }}>
+              <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>{label}</span>
+              <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 500, fontSize: 18, color: "#111827", textAlign: "right" }}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Red warning alert box */}
+        <div
+          className="flex items-center"
+          style={{
+            width: 568,
+            padding: "16px 32px",
+            background: "rgba(255, 223, 223, 0.5)",
+            borderRadius: 15,
+            gap: 16,
+          }}
+        >
+          <WarningCircleIcon className="text-[#DC2626] flex-shrink-0" />
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#DC2626" }}>
+            Reason: Insufficient balance in tiqra wallet or invalid bank details
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center" style={{ gap: 16 }}>
+          <button
+            onClick={() => setStep("amount")}
+            style={{
+              padding: "16px 32px",
+              background: "#9F4EF5",
+              borderRadius: 12,
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 18,
+              color: "#FFFFFF",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => router.push("/earner/wallet")}
+            style={{
+              padding: "16px 32px",
+              background: "#F8F9FC",
+              border: "1px solid #E5E7EB",
+              borderRadius: 12,
+              fontFamily: "Geist, sans-serif",
+              fontWeight: 500,
+              fontSize: 18,
+              color: "#111827",
+              cursor: "pointer",
+            }}
+          >
+            Back to Wallet
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Processing ─────────────────────────────────────────────────────────── */
+  if (step === "processing") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]" style={{ gap: 24 }}>
+        <HugeiconsIcon icon={Loading02Icon} size={60} className="text-[#9F4EF5] animate-spin" />
+        <p style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 18, color: "#6B7280" }}>
+          Processing your withdrawal…
+        </p>
+      </div>
+    );
+  }
+
+  /* ── Amount + Bank selection / Review ────────────────────────────────────── */
+  return (
+    <div className="flex flex-col min-h-screen" style={{ background: "#FEFEFE" }}>
+
+      {/* ── Header Row ─────────────────────────────────────────────────── */}
+      <div style={{ paddingTop: 60, width: 1016 }}>
+        {/* Back link */}
+        <Link
+          href="/earner/wallet"
+          className="flex items-center"
+          style={{ gap: 8, marginBottom: 32, textDecoration: "none" }}
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={20} className="text-[#6B7280]" />
+          <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>
+            Back to wallet
+          </span>
+        </Link>
+
+        {/* Title */}
+        <div className="flex flex-col" style={{ gap: 4, marginBottom: 48 }}>
+          <h1 style={{ fontFamily: "Inter, sans-serif", fontWeight: 700, fontSize: 40, letterSpacing: "-0.03em", color: "#111827" }}>
+            Withdraw Funds
+          </h1>
+          <p style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>
+            Available balance:{" "}
+            <strong style={{ color: "#9F4EF5" }}>₦{balance.toLocaleString()}.00</strong>
+          </p>
+        </div>
       </div>
 
-      <div className="flex-1 px-8 py-8 max-w-lg">
+      {/* ── Form area ──────────────────────────────────────────────────── */}
+      <div className="flex flex-col" style={{ gap: 32, width: 600 }}>
 
-        {/* ── Step 1: Amount ── */}
         {step === "amount" && (
-          <div className="flex flex-col gap-6">
-            {/* Available balance */}
-            <div className="bg-brand-primary rounded-[24px] p-6 flex items-center justify-between">
-              <div>
-                <p className="text-white/70 text-sm">Available Balance</p>
-                <p className="text-[32px] font-bold text-white">₦{balance.toLocaleString()}</p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <HugeiconsIcon icon={Building04Icon} size={24} className="text-white"  />
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-[24px] font-semibold text-text-primary mb-1">How much to withdraw?</h2>
-              <p className="text-body text-text-secondary">Minimum withdrawal: ₦1,000</p>
-            </div>
-
-            {/* Quick amounts */}
-            <div className="grid grid-cols-5 gap-2">
-              {QUICK_AMOUNTS.map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setAmount(amt.toString())}
-                  className={cn(
-                    "py-3 rounded-xl border text-sm font-medium transition-all",
-                    amount === amt.toString()
-                      ? "bg-brand-primary border-brand-primary text-white"
-                      : "bg-white border-[#E5E7EB] text-text-primary hover:border-brand-primary"
-                  )}
-                >
-                  ₦{amt >= 1000 ? `${amt / 1000}k` : amt}
-                </button>
-              ))}
-            </div>
-
-            <div>
-              <label className="tiqra-label">Enter Amount (₦)</label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Minimum ₦1,000"
-                className="tiqra-input text-[20px]"
-              />
-              {amount && Number(amount) > balance && (
-                <p className="text-sm text-[#DC2626] mt-1">Amount exceeds available balance</p>
-              )}
-            </div>
-
-            <div className="flex items-start gap-2 p-4 bg-[#FEF3C7] rounded-xl">
-              <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-[#D97706] flex-shrink-0 mt-0.5"  />
-              <p className="text-sm text-[#D97706]">
-                Withdrawals are processed within 24 hours. No fees.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setStep("bank")}
-              disabled={!canContinueAmount}
-              className="btn-primary w-full justify-center disabled:opacity-40"
-            >
-              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
-            </button>
-          </div>
-        )}
-
-        {/* ── Step 2: Bank Details ── */}
-        {step === "bank" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-[24px] font-semibold text-text-primary">Bank Account Details</h2>
-              <p className="text-body text-text-secondary mt-1">Where should we send ₦{amtNum.toLocaleString()}?</p>
-            </div>
-
-            <div>
-              <label className="tiqra-label">Select Bank</label>
-              <select
-                value={bankName}
-                onChange={(e) => { setBankName(e.target.value); setAccountName(""); }}
-                className="tiqra-input"
+          <>
+            {/* Amount input */}
+            <div className="flex flex-col" style={{ gap: 8 }}>
+              <label
+                style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 16, color: "#111827" }}
               >
-                <option value="">Choose your bank...</option>
-                {NIGERIAN_BANKS.map((b) => (
-                  <option key={b} value={b}>{b}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="tiqra-label">Account Number (NUBAN)</label>
-              <input
-                type="text"
-                value={accountNumber}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                  setAccountNumber(val);
-                  setAccountName("");
+                Amount
+              </label>
+              <div
+                className="flex items-center"
+                style={{
+                  padding: "16px 20px",
+                  background: "#FFFFFF",
+                  border: "1px solid #E5E7EB",
+                  borderRadius: 12,
+                  gap: 8,
                 }}
-                onBlur={resolveAccount}
-                placeholder="10-digit account number"
-                className="tiqra-input"
-                maxLength={10}
-              />
+              >
+                <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>₦</span>
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0"
+                  className="flex-1 outline-none bg-transparent"
+                  style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 24, color: "#111827" }}
+                />
+              </div>
+              <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 12, color: "#6B7280" }}>
+                Minimum withdraw is ₦300
+              </span>
             </div>
 
-            {/* Account resolution */}
-            {resolving && (
-              <div className="flex items-center gap-3 p-4 bg-[#F8F9FC] rounded-xl">
-                <HugeiconsIcon icon={Loading02Icon} size={18} className="text-brand-primary animate-spin"  />
-                <span className="text-body text-text-secondary">Verifying account...</span>
+            {/* Quick amount chips: 230x60, 16px borderRadius */}
+            <div className="flex flex-col" style={{ gap: 12 }}>
+              <label style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 16, color: "#111827" }}>
+                Quick amounts
+              </label>
+              <div className="flex items-center flex-wrap" style={{ gap: 12 }}>
+                {QUICK_AMOUNTS.map((a) => (
+                  <button
+                    key={a}
+                    onClick={() => setAmount(String(a))}
+                    style={{
+                      width: 230,
+                      height: 60,
+                      background: amtNum === a ? "#9F4EF5" : "#F8F9FC",
+                      border: `1px solid ${amtNum === a ? "#9F4EF5" : "#E5E7EB"}`,
+                      borderRadius: 16,
+                      fontFamily: "Geist, sans-serif",
+                      fontWeight: 500,
+                      fontSize: 18,
+                      color: amtNum === a ? "#FFFFFF" : "#111827",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    ₦{a.toLocaleString()}
+                  </button>
+                ))}
               </div>
-            )}
-            {accountName && !resolving && (
-              <div className="flex items-center gap-3 p-4 bg-[#DCFCE7] rounded-xl">
-                <HugeiconsIcon icon={CheckmarkCircle01Icon} size={18} className="text-[#16A34A]"  />
-                <div>
-                  <p className="text-body font-semibold text-text-primary">{accountName}</p>
-                  <p className="text-sm text-text-secondary">{bankName}</p>
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={() => setStep("confirm")}
-              disabled={!canContinueBank}
-              className="btn-primary w-full justify-center disabled:opacity-40"
-            >
-              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
-            </button>
-          </div>
-        )}
-
-        {/* ── Step 3: Confirm ── */}
-        {step === "confirm" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-[24px] font-semibold text-text-primary">Confirm Withdrawal</h2>
-              <p className="text-body text-text-secondary mt-1">Review your details before sending</p>
             </div>
 
-            <div className="bg-[#F8F9FC] rounded-2xl p-6 flex flex-col gap-4">
-              {[
-                { label: "Amount", value: `₦${amtNum.toLocaleString()}`, highlight: true },
-                { label: "Bank", value: bankName },
-                { label: "Account Number", value: accountNumber },
-                { label: "Account Name", value: accountName },
-                { label: "Processing Time", value: "Within 24 hours" },
-                { label: "Fee", value: "Free" },
-              ].map(({ label, value, highlight }) => (
-                <div key={label} className="flex justify-between text-body">
-                  <span className="text-text-secondary">{label}</span>
-                  <span className={cn("font-medium", highlight ? "text-[24px] font-bold text-brand-primary" : "text-text-primary")}>
-                    {value}
+            {/* Send to section */}
+            <div className="flex flex-col" style={{ gap: 12 }}>
+              <div className="flex items-center justify-between">
+                <label style={{ fontFamily: "Geist, sans-serif", fontWeight: 600, fontSize: 16, color: "#111827" }}>
+                  Send to
+                </label>
+                <Link
+                  href="/earner/wallet/payment-methods"
+                  className="flex items-center"
+                  style={{ gap: 6, textDecoration: "none" }}
+                >
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                    <line x1="12" y1="5" x2="12" y2="19" stroke="#9F4EF5" strokeWidth="2" strokeLinecap="round"/>
+                    <line x1="5" y1="12" x2="19" y2="12" stroke="#9F4EF5" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 14, color: "#9F4EF5" }}>
+                    Add account
                   </span>
-                </div>
-              ))}
+                </Link>
+              </div>
+              <div className="flex flex-col" style={{ gap: 12 }}>
+                {SAVED_ACCOUNTS.map((acc) => (
+                  <AccountCard
+                    key={acc.id}
+                    {...acc}
+                    selected={selectedAccount === acc.id}
+                    onSelect={() => setSelectedAccount(acc.id)}
+                  />
+                ))}
+              </div>
             </div>
+          </>
+        )}
 
-            <div className="flex items-start gap-2 p-4 bg-[#EDE9FE] rounded-xl">
-              <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-brand-primary flex-shrink-0 mt-0.5"  />
-              <p className="text-sm text-brand-primary">
-                Please verify the account details above. Withdrawals to wrong accounts cannot be reversed.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button onClick={() => setStep("bank")} className="btn-secondary flex-1 justify-center">
-                Edit Details
-              </button>
-              <button onClick={handleConfirm} className="btn-primary flex-1 justify-center">
-                Withdraw ₦{amtNum.toLocaleString()}
-              </button>
-            </div>
+        {step === "review" && account && (
+          <div
+            className="flex flex-col"
+            style={{
+              padding: 24,
+              background: "#F8F9FC",
+              border: "none",
+              borderRadius: 30,
+              gap: 20,
+            }}
+          >
+            <h3 style={{ fontFamily: "Geist, sans-serif", fontWeight: 500, fontSize: 24, color: "#111827" }}>
+              Review Payment
+            </h3>
+            {[
+              { label: "Amount", value: `₦${amtNum.toLocaleString()}.00` },
+              { label: "Bank", value: account.bank },
+              { label: "Account", value: account.masked },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between" style={{ padding: "12px 0", borderBottom: label === "Account" ? "none" : "1px solid #E5E7EB" }}>
+                <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 400, fontSize: 16, color: "#6B7280" }}>{label}</span>
+                <span style={{ fontFamily: "Geist, sans-serif", fontWeight: 500, fontSize: 24, color: "#111827" }}>{value}</span>
+              </div>
+            ))}
           </div>
         )}
+
+        {/* CTA button */}
+        <div className="flex justify-end" style={{ marginTop: 8 }}>
+          <button
+            onClick={handleContinue}
+            disabled={step === "amount" && amtNum < 300}
+            className="flex items-center animate-none"
+            style={{
+              padding: "18px 32px",
+              background: step === "amount" && amtNum < 300 ? "#E5E7EB" : "#9F4EF5",
+              borderRadius: 12,
+              gap: 10,
+              border: "none",
+              cursor: step === "amount" && amtNum < 300 ? "default" : "pointer",
+            }}
+          >
+            <span style={{ fontFamily: "Inter, sans-serif", fontWeight: 500, fontSize: 16, color: "#FFFFFF" }}>
+              {step === "review" ? "Confirm & Withdraw" : "Review payment"}
+            </span>
+            <HugeiconsIcon icon={ArrowRight01Icon} size={20} className="text-white" />
+          </button>
+        </div>
       </div>
     </div>
   );

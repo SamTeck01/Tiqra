@@ -1,142 +1,71 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { cn, getInitials } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Home01Icon, DashboardSquare01Icon, File01Icon, Wallet01Icon, Settings01Icon, Logout01Icon, Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
+import { useState } from "react";
+import {
+  DashboardSquare01Icon,
+  File01Icon,
+  Wallet01Icon,
+  Settings01Icon,
+  Cancel01Icon,
+  Menu01Icon,
+} from "@hugeicons/core-free-icons";
 
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ReactNode;
+  icon: typeof DashboardSquare01Icon;
   matchExact?: boolean;
 }
 
 const founderNav: NavItem[] = [
-  { label: "Dashboard", href: "/founder/dashboard", icon: <HugeiconsIcon icon={DashboardSquare01Icon} size={22}  />, matchExact: true },
-  { label: "My Ideas", href: "/founder/ideas", icon: <HugeiconsIcon icon={File01Icon} size={22}  /> },
-  { label: "Wallet", href: "/founder/wallet", icon: <HugeiconsIcon icon={Wallet01Icon} size={22}  />, matchExact: true },
-  { label: "Settings", href: "/founder/settings", icon: <HugeiconsIcon icon={Settings01Icon} size={22}  />, matchExact: true },
+  { label: "Dashboard", href: "/founder/dashboard", icon: DashboardSquare01Icon, matchExact: true },
+  { label: "My Ideas",  href: "/founder/ideas",     icon: File01Icon },
+  { label: "Wallet",    href: "/founder/wallet",     icon: Wallet01Icon,   matchExact: true },
+  { label: "Settings",  href: "/founder/settings",   icon: Settings01Icon, matchExact: true },
 ];
 
 const earnerNav: NavItem[] = [
-  { label: "Dashboard", href: "/earner/dashboard", icon: <HugeiconsIcon icon={DashboardSquare01Icon} size={22}  />, matchExact: true },
-  { label: "Surveys", href: "/earner/surveys", icon: <HugeiconsIcon icon={File01Icon} size={22}  /> },
-  { label: "Wallet", href: "/earner/wallet", icon: <HugeiconsIcon icon={Wallet01Icon} size={22}  />, matchExact: true },
-  { label: "Settings", href: "/earner/settings", icon: <HugeiconsIcon icon={Settings01Icon} size={22}  />, matchExact: true },
+  { label: "Dashboard", href: "/earner/dashboard", icon: DashboardSquare01Icon, matchExact: true },
+  { label: "Survey",    href: "/earner/surveys",   icon: File01Icon },
+  { label: "Wallet",    href: "/earner/wallet",    icon: Wallet01Icon,   matchExact: true },
+  { label: "Settings",  href: "/earner/settings",  icon: Settings01Icon, matchExact: true },
 ];
 
+/* ─── Tiqra SVG Logo ─────────────────────────────────────────────────────── */
+function TiqraLogo() {
+  return (
+    <svg width="120" height="36" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 28L16 8L28 28H20L16 20L12 28H4Z" fill="white" fillOpacity="0.95" />
+      <path d="M12 28L16 20L20 28" fill="white" fillOpacity="0.5" />
+      <text x="36" y="26" fontFamily="inherit" fontSize="22" fontWeight="700" fill="white" letterSpacing="-0.5">
+        Tiqra
+      </text>
+    </svg>
+  );
+}
+
 export default function Sidebar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const { user, logout } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isFounder = user?.role === "founder" || pathname.startsWith("/founder");
   const navItems = isFounder ? founderNav : earnerNav;
 
-  const SidebarContent = () => (
-    <>
-      {/* Logo */}
-      <div className="px-8 pt-10 pb-8 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-[12px] bg-white/20 flex items-center justify-center flex-shrink-0 border border-white/20">
-          <span className="text-white font-bold text-[20px] leading-none">T</span>
-        </div>
-        <div>
-          <p className="text-white font-bold text-[22px] tracking-tight leading-none">Tiqra</p>
-          <p className="text-white/40 text-[10px] tracking-[0.12em] uppercase mt-0.5">
-            {isFounder ? "Founder" : "Earner"} Panel
-          </p>
-        </div>
-        {/* Mobile close button */}
-        <button
-          className="ml-auto lg:hidden p-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-          onClick={() => setMobileOpen(false)}
-        >
-          <HugeiconsIcon icon={Cancel01Icon} size={20} className="text-white"  />
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="h-px bg-white/15 mx-8 mb-6" />
-
-      {/* Nav */}
-      <nav className="flex flex-col gap-1 px-4 flex-1">
-        {navItems.map((item) => {
-          const isActive = item.matchExact
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + "/");
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[17px] font-normal transition-all duration-200 relative group",
-                isActive
-                  ? "bg-white/20 text-white font-medium"
-                  : "text-white/65 hover:bg-white/10 hover:text-white"
-              )}
-            >
-              <span className={cn("flex-shrink-0", isActive ? "text-white" : "text-white/60 group-hover:text-white")}>
-                {item.icon}
-              </span>
-              <span className="flex-1">{item.label}</span>
-              {/* Active right indicator */}
-              {isActive && (
-                <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-8 bg-[#EDE9FE] rounded-l-full" />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Divider */}
-      <div className="h-px bg-white/15 mx-8 mt-6" />
-
-      {/* User profile */}
-      <div className="px-5 py-5 flex items-center gap-3">
-        {/* Avatar */}
-        <div className="w-[52px] h-[52px] rounded-[14px] bg-white/20 border border-white/15 flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-semibold text-[18px]">
-            {user ? getInitials(user.name) : "HA"}
-          </span>
-        </div>
-
-        {/* Name + role */}
-        <div className="flex-1 min-w-0">
-          <p className="text-white text-[15px] font-medium leading-tight truncate">
-            {user?.name || "Haleemah A."}
-          </p>
-          <p className="text-white/45 text-[12px] capitalize mt-0.5">
-            {user?.role || "Founder"}
-          </p>
-        </div>
-
-        {/* Logout */}
-        <button
-          onClick={logout}
-          title="Sign out"
-          className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20 transition-colors flex-shrink-0"
-        >
-          <HugeiconsIcon icon={Logout01Icon} size={18} className="text-white/65"  />
-        </button>
-      </div>
-    </>
-  );
-
   return (
     <>
       {/* Mobile hamburger */}
       <button
         className="fixed top-4 left-4 z-50 lg:hidden w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: "linear-gradient(180deg, #9F4EF5 0%, #7C3ACD 100%)" }}
+        style={{ background: "#9F4EF5" }}
         onClick={() => setMobileOpen(true)}
       >
-        <HugeiconsIcon icon={Menu01Icon} size={22} className="text-white"  />
+        <HugeiconsIcon icon={Menu01Icon} size={22} className="text-white" />
       </button>
 
       {/* Mobile overlay */}
@@ -147,7 +76,7 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar — desktop fixed, mobile overlay */}
+      {/* Sidebar — Figma: 324px wide, solid #9F4EF5, box-shadow 4px 4px 32px rgba(0,0,0,0.16) */}
       <aside
         className={cn(
           "w-[324px] min-h-screen flex flex-col fixed top-0 left-0 z-50 transition-transform duration-300",
@@ -155,11 +84,129 @@ export default function Sidebar() {
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
         style={{
-          background: "linear-gradient(180deg, #9F4EF5 0%, #7C3ACD 100%)",
-          boxShadow: "4px 0 32px rgba(159, 78, 245, 0.25)",
+          background: "#9F4EF5",
+          boxShadow: "4px 4px 32px 0px rgba(0, 0, 0, 0.16)",
         }}
       >
-        <SidebarContent />
+        {/* ── Logo area — Figma: logo image top-left, ~y=60, x=57 ─────── */}
+        <div className="flex items-center justify-between px-8 pt-[60px] pb-6">
+          <Link href="/" className="block">
+            <TiqraLogo />
+          </Link>
+          {/* Mobile close */}
+          <button
+            className="lg:hidden p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+            onClick={() => setMobileOpen(false)}
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={18} className="text-white" />
+          </button>
+        </div>
+
+        {/* ── Nav — Figma: starts at y=218, gap=12px ───────────────────── */}
+        <nav className="flex flex-col gap-3 flex-1" style={{ paddingTop: 0 }}>
+          {navItems.map((item) => {
+            const isActive = item.matchExact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + "/");
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="relative flex items-center gap-2.5 px-6 py-4 text-white text-[18px] font-normal transition-all duration-200"
+                style={
+                  isActive
+                    ? {
+                        background: "rgba(237, 233, 254, 0.4)",
+                        borderRight: "3px solid #EDE9FE",
+                      }
+                    : {}
+                }
+              >
+                <HugeiconsIcon icon={item.icon} size={24} className="text-white flex-shrink-0" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* ── Divider — Figma: at y=878, stroke brand color/Background ── */}
+        <div style={{ margin: "0 3px", borderTop: "1px solid #EDE9FE", opacity: 0.4 }} />
+
+        {/* ── User footer — Figma: y=910, gap=42px / 66px ─────────── */}
+        {(() => {
+          const isSettings = pathname.includes("/settings");
+          return (
+            <div 
+              className="flex items-center" 
+              style={{ 
+                gap: isSettings ? "66px" : "42px",
+                paddingLeft: isSettings ? 21 : 18,
+                paddingRight: isSettings ? 21 : 18,
+                paddingTop: 20,
+                paddingBottom: 20
+              }}
+            >
+              {/* Avatar + name */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: isSettings ? 60 : 80,
+                    height: isSettings ? 60 : 80,
+                    background: "#F8F9FC",
+                    borderRadius: isSettings ? 40 : 16,
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#9F4EF5",
+                      fontFamily: "Geist, sans-serif",
+                      fontWeight: 600,
+                      fontSize: isSettings ? 24 : 32,
+                      lineHeight: "1.5em",
+                      letterSpacing: "-0.03em",
+                    }}
+                  >
+                    {user ? getInitials(user.name) : "HA"}
+                  </span>
+                </div>
+                {/* Name + role */}
+                <div style={{ width: 104 }}>
+                  <p className="text-white text-[18px] font-normal truncate">
+                    {user?.name?.split(" ")[0] || "Haleemah"}{". "}
+                    {user?.name?.split(" ")[1]?.charAt(0) || "A"}
+                  </p>
+                  <p className="text-white text-[14px] font-normal capitalize opacity-80">
+                    {user?.role || "Earner"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Logout/Menu Button */}
+              <button
+                onClick={logout}
+                title="Sign out"
+                className="flex items-center justify-center flex-shrink-0"
+                style={{
+                  width: isSettings ? 40 : 50,
+                  height: isSettings ? 40 : 50,
+                  background: isSettings ? "rgba(248, 249, 252, 0.5)" : "#9F4EF5",
+                  borderRadius: isSettings ? 8 : 999,
+                  border: isSettings ? "1px solid #E5E7EB" : "none",
+                  boxShadow: isSettings ? "none" : "4px 4px 32px 0px rgba(0, 0, 0, 0.2)",
+                }}
+              >
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <polyline points="16 17 21 12 16 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="21" y1="12" x2="9" y2="12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          );
+        })()}
       </aside>
     </>
   );
