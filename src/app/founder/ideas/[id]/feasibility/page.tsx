@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight02Icon, Clock01Icon, Dollar02Icon } from "@hugeicons/core-free-icons";
-import { useSurvey } from "@/components/founder/useSurvey";
+import { useSurvey } from "@/components/shared/useSurvey";
 import ReportHeader from "@/components/founder/ReportHeader";
 import { Ring } from "@/components/ui/Primitives";
 import { getFeasibilityReport, levelOf } from "@/lib/reports";

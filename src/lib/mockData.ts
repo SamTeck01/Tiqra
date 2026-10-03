@@ -1,4 +1,4 @@
-import { User, Survey, Transaction, Wallet, Response, Idea } from "./types";
+import { User, Survey, Transaction, Wallet, Response, Idea, Question } from "./types";
 
 export const MOCK_USERS: User[] = [
   {
@@ -12,7 +12,7 @@ export const MOCK_USERS: User[] = [
   },
   {
     $id: "user_earner_001",
-    name: "Sam Earner",
+    name: "Haleemah Abdulazeez",
     email: "earner@tiqra.com",
     role: "earner",
     walletBalance: 2500,
@@ -33,10 +33,10 @@ export const MOCK_WALLETS: Wallet[] = [
   {
     $id: "wallet_earner_001",
     userId: "user_earner_001",
-    balance: 2500,
-    pendingBalance: 300,
-    totalEarned: 12500,
-    totalSpent: 10000,
+    balance: 0,
+    pendingBalance: 0,
+    totalEarned: 0,
+    totalSpent: 0,
   },
 ];
 
@@ -48,25 +48,62 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
   { $id: "tx_f3", userId: "user_founder_001", type: "escrow", amount: 50000, description: "Campus Swap", status: "completed", balanceAfter: 25000, createdAt: at("2026-04-04T11:30:00") },
   { $id: "tx_f4", userId: "user_founder_001", type: "credit", amount: 100000, description: "Added funds to wallet via Paystack", status: "completed", reference: "tiqra_mock_ref_4", balanceAfter: 75000, createdAt: at("2026-04-02T10:30:00") },
   { $id: "tx_f5", userId: "user_founder_001", type: "escrow", amount: 25000, description: "StudyBuddy", status: "completed", balanceAfter: 0, createdAt: at("2026-03-24T11:30:00") },
-  {
-    $id: "tx_003",
-    userId: "user_earner_001",
-    type: "credit",
-    amount: 300,
-    description: "Reward: E-commerce Shopping Habits",
-    status: "completed",
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    $id: "tx_004",
-    userId: "user_earner_001",
-    type: "withdrawal",
-    amount: 10000,
-    description: "Bank Withdrawal to GTBank",
-    status: "completed",
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
 ];
+
+
+type Q = [string, Question["type"], string[]?];
+
+function questions(list: Q[]): Question[] {
+  return list.map(([text, type, options], i) => ({ id: `q_${i + 1}`, text, type, options, required: true, order: i + 1 }));
+}
+
+/** Truth Layer attention check, slotted into every seeded survey. */
+const HONEYPOT: Question = {
+  id: "q_check",
+  text: "For quality control, please select 'Agree' to continue.",
+  type: "multiple_choice",
+  options: ["Disagree", "Neutral", "Agree"],
+  isHoneypot: true,
+  honeypotAnswer: "Agree",
+  required: true,
+  order: 0,
+};
+
+function withCheck(qs: Question[], at = 3): Question[] {
+  const out = [...qs];
+  out.splice(at, 0, HONEYPOT);
+  return out.map((q, i) => ({ ...q, order: i + 1 }));
+}
+
+const BANKING = withCheck(
+  questions([
+    ["How often do you use mobile banking app?", "multiple_choice", ["Daily", "A few times a week", "Weekly", "Rarely"]],
+    ["How satisfied are you with your current bank?", "scale"],
+    ["What feature matters most to you?", "multiple_choice", ["Speed", "Security", "Rewards", "Simplicity"]],
+    ["What would make a banking app feel premium to you?", "short_text"],
+    ["Which best describes your ideal banking app?", "multiple_choice", ["Minimal", "Feature-Rich", "Social", "Gamified"]],
+    ["Have you switched banks in the last two years?", "yes_no"],
+    ["How much do you trust app-only banks?", "scale"],
+    ["How do you usually send money to friends?", "multiple_choice", ["Bank transfer", "USSD", "Mobile wallet", "Cash"]],
+    ["Would you pay a monthly fee for premium banking features?", "yes_no"],
+    ["What is the most annoying thing about your banking app today?", "short_text"],
+  ])
+);
+
+const GENERIC = withCheck(
+  questions([
+    ["How often do you face this problem?", "multiple_choice", ["Daily", "A few times a week", "Rarely", "Never"]],
+    ["How frustrating is the way you deal with it today?", "scale"],
+    ["Do you currently use any tool or app for this?", "yes_no"],
+    ["What is the biggest challenge with your current option?", "short_text"],
+    ["How useful would a new solution be to you?", "scale"],
+    ["Would you pay for a solution like this?", "yes_no"],
+    ["How much would you be willing to pay per month?", "multiple_choice", ["Nothing", "Under ₦1,000", "₦1,000 – ₦3,000", "Above ₦3,000"]],
+    ["How likely are you to keep using it after the first month?", "scale"],
+    ["Would you recommend a tool like this to a friend?", "yes_no"],
+    ["What would stop you from using a tool like this?", "short_text"],
+  ])
+);
 
 const NG = { country: "Nigeria", ageRange: { min: 18, max: 45 } };
 
@@ -79,8 +116,8 @@ function seedSurvey(
   completed: number,
   extra: Partial<Survey> = {}
 ): Survey {
-  const questions = 11;
-  const payoutPerResponse = questions * 30;
+  const qs = extra.questions ?? GENERIC;
+  const payoutPerResponse = qs.filter((q) => !q.isHoneypot).length * 30;
   const payout = payoutPerResponse * required;
   return {
     $id: id,
@@ -89,7 +126,7 @@ function seedSurvey(
     summary,
     creatorId: "user_founder_001",
     status,
-    questions: [],
+    questions: qs,
     targetAudience: NG,
     respondentsRequired: required,
     respondentsCompleted: completed,
@@ -111,24 +148,16 @@ export const MOCK_SURVEYS: Survey[] = [
   seedSurvey("survey_artisan", "Local artisan marketplace", "Connecting local artisans to urban buyers", "completed", 80, 80, { verdict: "go", confidence: 84, createdAt: at("2026-04-12T09:00:00") }),
   seedSurvey("survey_tutoring", "On-demand tutoring for SS3", "Exam prep tutors on demand for SS3 students", "completed", 60, 60, { verdict: "pivot", confidence: 41, createdAt: at("2026-04-04T09:00:00") }),
   seedSurvey("survey_crypto", "Crypto rewards for gamers", "Paying gamers in crypto for achievements", "completed", 50, 50, { verdict: "kill", confidence: 21, createdAt: at("2026-03-20T09:00:00") }),
+  // Other founders' live surveys, shown to earners.
+  seedSurvey("survey_grocery", "Online grocery preference", "How people shop for groceries online", "live", 100, 41, { creatorId: "user_founder_002" }),
+  seedSurvey("survey_banking", "Mobile banking habit", "Everyday mobile banking behaviour", "live", 80, 12, { creatorId: "user_founder_002", questions: BANKING }),
+  seedSurvey("survey_streaming", "Streaming subscription pricing", "What people pay for streaming", "live", 60, 30, { creatorId: "user_founder_002" }),
+  seedSurvey("survey_travel", "Travel booking experience", "Booking flights and hotels in Nigeria", "live", 50, 9, { creatorId: "user_founder_002", questions: BANKING }),
+  seedSurvey("survey_hostel", "Hostel balloting", "Fairer hostel allocation for students", "live", 120, 77, { creatorId: "user_founder_002" }),
   seedSurvey("survey_diabetes", "Meal plan generator for diabetes", "Generic meal plans don't account for medical needs", "draft", 50, 0),
 ];
 
-export const MOCK_RESPONSES: Response[] = [
-  {
-    $id: "resp_001",
-    surveyId: "survey_001",
-    respondentId: "user_earner_001",
-    answers: [
-      { questionId: "q_1", value: "Monthly", timeTaken: 12 },
-      { questionId: "q_2", value: "High fees and delayed transfers", timeTaken: 45 },
-    ],
-    validatedByTruthLayer: true,
-    flagged: false,
-    completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    timeTaken: 57,
-  },
-];
+export const MOCK_RESPONSES: Response[] = [];
 
 export const MOCK_IDEAS: Idea[] = [
   {

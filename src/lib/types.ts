@@ -39,14 +39,16 @@ export interface User {
 }
 
 export interface UserDemographics {
-  age: number;
   gender: string;
-  location: string;
   occupation: string;
-  industry: string;
-  incomeBracket: string;
+  birthMonth: string;
+  location?: string;
+  industry?: string;
+  incomeBracket?: string;
+  education?: string;
   interests: string[];
-  education: string;
+  /** Answers to the niche questions asked for each chosen interest. */
+  interestAnswers?: Record<string, string>;
   verifiedTags: string[];
 }
 
@@ -80,6 +82,8 @@ export interface Question {
   type: QuestionType;
   options?: string[];
   isHoneypot?: boolean;
+  /** The only acceptable answer for a honeypot (attention check) question. */
+  honeypotAnswer?: string;
   required: boolean;
   order: number;
 }

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChartIncreaseIcon, Money03Icon, QuoteDownIcon, Target02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { Bar as RBar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { useSurvey } from "@/components/founder/useSurvey";
+import { useSurvey } from "@/components/shared/useSurvey";
 import ReportHeader from "@/components/founder/ReportHeader";
 import { Bar } from "@/components/ui/Primitives";
 import { Dimension, TaggedLine, getValidationReport } from "@/lib/reports";

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Activity01Icon, Comment01Icon, SparklesIcon } from "@hugeicons/core-free-icons";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { useSurvey } from "@/components/founder/useSurvey";
+import { useSurvey } from "@/components/shared/useSurvey";
 import { BackLink, Bar, Ring } from "@/components/ui/Primitives";
 import { getLiveStats, levelOf } from "@/lib/reports";
 

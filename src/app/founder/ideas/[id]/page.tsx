@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useSurvey } from "@/components/founder/useSurvey";
+import { useSurvey } from "@/components/shared/useSurvey";
 
 /** Sends the founder to the right view for the idea's state. */
 export default function IdeaRedirect() {

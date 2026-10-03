@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { account, databases, DB_ID, COLLECTIONS } from "@/lib/appwrite";
-import { User, UserRole } from "@/lib/types";
+import { User, UserDemographics, UserRole } from "@/lib/types";
 import { ID, Query } from "appwrite";
 
 interface AuthState {
@@ -16,6 +16,7 @@ interface AuthState {
   getUser: () => Promise<void>;
   clearError: () => void;
   switchRole: (role: UserRole) => Promise<void>;
+  updateProfile: (data: { name?: string; demographics?: UserDemographics }) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -132,6 +133,13 @@ export const useAuthStore = create<AuthState>()(
         });
         throw err;
       }
+    },
+
+    updateProfile: async (data) => {
+      const currentUser = get().user;
+      if (!currentUser) return;
+      const updatedDoc = await databases.updateDocument(DB_ID, COLLECTIONS.USERS, currentUser.$id, data);
+      set({ user: updatedDoc as unknown as User });
     },
   })
 );
