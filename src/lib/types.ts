@@ -144,3 +144,17 @@ export interface AIReport {
   confidenceCeiling: number;
   createdAt: string;
 }
+
+/** A saved card (funding) or bank account (withdrawals). Only display details are stored. */
+export interface PaymentMethod {
+  $id: string;
+  userId: string;
+  kind: "card" | "bank";
+  /** Card brand or bank name. */
+  provider: string;
+  last4: string;
+  holderName: string;
+  expiry?: string;
+  isDefault: boolean;
+  createdAt: string;
+}

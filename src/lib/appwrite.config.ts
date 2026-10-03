@@ -7,4 +7,5 @@ export const COLLECTIONS = {
   RESPONSES: process.env.NEXT_PUBLIC_APPWRITE_RESPONSES_COLLECTION_ID || "mock_responses",
   TRANSACTIONS: process.env.NEXT_PUBLIC_APPWRITE_TRANSACTIONS_COLLECTION_ID || "mock_transactions",
   WALLETS: process.env.NEXT_PUBLIC_APPWRITE_WALLETS_COLLECTION_ID || "mock_wallets",
+  PAYMENT_METHODS: process.env.NEXT_PUBLIC_APPWRITE_PAYMENT_METHODS_COLLECTION_ID || "mock_payment_methods",
 };

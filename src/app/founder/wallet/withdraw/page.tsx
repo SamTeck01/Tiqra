@@ -1,5 +1,5 @@
 import WithdrawFlow from "@/components/wallet/WithdrawFlow";
 
 export default function WithdrawPage() {
-  return <WithdrawFlow basePath="/earner/wallet" />;
+  return <WithdrawFlow basePath="/founder/wallet" />;
 }

@@ -1,264 +1,258 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft01Icon, ArrowRight01Icon, AlertCircleIcon, CheckmarkCircle01Icon, CancelCircleIcon, Add01Icon, Loading02Icon, CreditCardIcon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
+import { ArrowRight02Icon } from "@hugeicons/core-free-icons";
+import { useAuthStore } from "@/store/auth.store";
+import { MIN_TOPUP, useWalletStore } from "@/store/wallet.store";
+import CardForm, { CardInput, EMPTY_CARD, cardError } from "@/components/wallet/CardForm";
+import { AmountChips, CardBrand, SummaryCard } from "@/components/wallet/Visuals";
+import ResultScreen from "@/components/wallet/ResultScreen";
+import { LoadingModal } from "@/components/ui/Modal";
+import { BackLink, FlowProgress, PageTitle, primaryBtn } from "@/components/ui/Primitives";
+import { PaymentMethod } from "@/lib/types";
+import { cn, formatNairaFull, formatNairaShort } from "@/lib/utils";
 
-type Step = "amount" | "method" | "processing" | "success" | "failed";
+type Result = { ok: true; ref: string } | { ok: false; reason: string };
 
-const QUICK_AMOUNTS = [5000, 10000, 25000, 50000, 100000, 250000];
+export default function FundWalletPage() {
+  const { user } = useAuthStore();
+  const { wallet, methods, fetchWallet, fetchMethods, addMethod, fundWallet } = useWalletStore();
+  const [step, setStep] = useState(1);
+  const [amountInput, setAmountInput] = useState("");
+  const [selected, setSelected] = useState<string>("new");
+  const [card, setCard] = useState<CardInput>(EMPTY_CARD);
+  const [cardErr, setCardErr] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
+  const [copied, setCopied] = useState(false);
 
-export default function FounderFundWalletPage() {
-  const router = useRouter();
-  const [step, setStep] = useState<Step>("amount");
-  const [amount, setAmount] = useState("");
-  const [payMethod, setPayMethod] = useState<"card" | "transfer" | null>(null);
+  useEffect(() => {
+    if (!user?.$id) return;
+    fetchWallet(user.$id);
+    fetchMethods(user.$id);
+  }, [user?.$id, fetchWallet, fetchMethods]);
 
-  const amtNum = Number(amount || 0);
-  const canContinue = amtNum >= 1000;
+  const cards = methods.filter((m) => m.kind === "card");
+  useEffect(() => {
+    const def = cards.find((c) => c.isDefault) ?? cards[0];
+    if (def && selected === "new") setSelected(def.$id);
+    // Only pick a default once the saved cards load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length]);
 
-  const handlePay = async () => {
-    setStep("processing");
-    await new Promise((r) => setTimeout(r, 2500));
-    setStep(Math.random() > 0.1 ? "success" : "failed");
+  const amount = Number(amountInput.replace(/\D/g, "")) || 0;
+  const balance = wallet?.balance ?? 0;
+  const savedCard = cards.find((c) => c.$id === selected);
+
+  const toReview = () => {
+    if (selected === "new") {
+      const err = cardError(card);
+      if (err) return setCardErr(err);
+    }
+    setCardErr("");
+    setStep(3);
   };
 
-  // ── Processing ──────────────────────────────────────────────────────────────
-  if (step === "processing") {
-    return (
-      <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center gap-8">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative w-24 h-24">
-            <div className="w-24 h-24 rounded-full border-4 border-[#EDE9FE] border-t-brand-primary animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <HugeiconsIcon icon={CreditCardIcon} size={32} className="text-brand-primary"  />
-            </div>
-          </div>
-          <div className="text-center">
-            <h1 className="text-[28px] font-semibold text-text-primary">Processing Payment</h1>
-            <p className="text-body text-text-secondary mt-2">
-              Adding ₦{amtNum.toLocaleString()} to your wallet
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-2.5 h-2.5 rounded-full bg-brand-primary animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const pay = async () => {
+    if (!user) return;
+    setProcessing(true);
+    try {
+      let method: PaymentMethod | undefined = savedCard;
+      if (!method) {
+        const digits = card.number.replace(/\D/g, "");
+        // Test decline: cards ending in 0002 are refused, mirroring Paystack's test cards.
+        if (digits.endsWith("0002")) throw new Error("Card declined . CODE ERR . INSUFF - 4012");
+        method = await addMethod({ userId: user.$id, kind: "card", provider: "Mastercard", last4: digits.slice(-4), holderName: card.name.trim(), expiry: card.expiry });
+      }
+      const ref = await fundWallet(user.$id, amount, method);
+      setResult({ ok: true, ref });
+    } catch (e) {
+      setResult({ ok: false, reason: e instanceof Error ? e.message : "Payment failed" });
+    } finally {
+      setProcessing(false);
+    }
+  };
 
-  // ── Success ──────────────────────────────────────────────────────────────────
-  if (step === "success") {
+  if (result?.ok) {
     return (
-      <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
-        <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
-          <div className="w-28 h-28 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={56} className="text-[#16A34A]"  />
-          </div>
-          <div>
-            <h1 className="text-[32px] font-bold text-text-primary">Payment Successful!</h1>
-            <p className="text-body text-text-secondary mt-2">
-              ₦{amtNum.toLocaleString()} has been added to your wallet. You can now fund your next survey.
-            </p>
-          </div>
-
-          <div className="w-full bg-[#F8F9FC] rounded-2xl p-5 flex flex-col gap-3 text-left">
-            {[
-              { label: "Amount Added", value: `₦${amtNum.toLocaleString()}` },
-              { label: "Payment Method", value: payMethod === "card" ? "Debit Card" : "Bank Transfer" },
-              { label: "Status", value: "✓ Successful" },
-              { label: "Date", value: new Date().toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between text-body">
-                <span className="text-text-secondary">{label}</span>
-                <span className="text-text-primary font-medium">{value}</span>
+      <div className="pt-6">
+        <div className="mx-auto max-w-[495px] rounded-[24px] bg-white px-6 shadow-[0_4px_24px_rgba(17,24,39,0.06)]">
+          <ResultScreen
+            ok
+            title="Funds added!!!"
+            subtitle="Your wallet has been topped up successfully. Funds are available immediately."
+            primary={{ label: "Go to wallet", href: "/founder/wallet" }}
+            secondary={{ label: "Launch a validation", href: "/founder/ideas/new" }}
+          >
+            <div className="mt-6 flex w-full items-center justify-between rounded-xl border border-[#E5E7EB] px-3 py-3 text-left">
+              <div>
+                <p className="text-[12px] text-[#6B7280]">Transaction REF</p>
+                <p className="text-[15px] text-[#111827]">{result.ref}</p>
               </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-3 w-full">
-            <Link href="/founder/wallet" className="btn-primary w-full justify-center">
-              Back to Wallet
-            </Link>
-            <Link href="/founder/ideas/new" className="btn-secondary w-full justify-center">
-              Launch a New Survey
-            </Link>
-          </div>
+              <button
+                onClick={() => navigator.clipboard?.writeText(result.ref).then(() => setCopied(true))}
+                className="text-[14px] text-[#4F46E5]"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <div className="mt-5 w-full text-left">
+              <p className="text-[13px] uppercase text-[#4F46E5]">What&apos;s next</p>
+              {["Launch a new validation", "Fund an existing idea that's waiting for payment"].map((t, i) => (
+                <p key={t} className="mt-2 flex items-center gap-3 text-[14px] text-[#6B7280]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-[#4F46E5] text-[11px] text-white">{i + 1}</span>
+                  {t}
+                </p>
+              ))}
+            </div>
+          </ResultScreen>
         </div>
       </div>
     );
   }
 
-  // ── Failed ──────────────────────────────────────────────────────────────────
-  if (step === "failed") {
+  if (result && !result.ok) {
     return (
-      <div className="ml-[324px] min-h-screen bg-[#FEFEFE] flex flex-col items-center justify-center px-8">
-        <div className="max-w-md w-full flex flex-col items-center gap-6 text-center">
-          <div className="w-28 h-28 rounded-full bg-[#FEE2E2] flex items-center justify-center">
-            <HugeiconsIcon icon={CancelCircleIcon} size={56} className="text-[#DC2626]"  />
-          </div>
-          <div>
-            <h1 className="text-[32px] font-bold text-text-primary">Payment Failed</h1>
-            <p className="text-body text-text-secondary mt-2">
-              We couldn't process your payment. Your account has not been charged.
-            </p>
-          </div>
-
-          <div className="w-full flex items-start gap-3 p-4 bg-[#FEE2E2] rounded-xl text-left">
-            <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-[#DC2626] flex-shrink-0 mt-0.5"  />
-            <p className="text-sm text-[#DC2626]">
-              This may be due to insufficient funds, incorrect card details, or a network issue. Please check and try again.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 w-full">
-            <button onClick={() => setStep("amount")} className="btn-primary w-full justify-center">
-              Try Again
-            </button>
-            <Link href="/founder/wallet" className="btn-secondary w-full justify-center">
-              Back to Wallet
-            </Link>
-          </div>
+      <div className="pt-6">
+        <div className="mx-auto max-w-[495px] rounded-[24px] bg-white px-6 shadow-[0_4px_24px_rgba(17,24,39,0.06)]">
+          <ResultScreen
+            ok={false}
+            title="Payment failed"
+            subtitle="Your card was declined. No money was charged. This is usually due to insufficient funds or a card restriction."
+            primary={{
+              label: "Try a different card",
+              onClick: () => {
+                setResult(null);
+                setSelected("new");
+                setCard(EMPTY_CARD);
+                setStep(2);
+              },
+            }}
+          >
+            <p className="mt-6 w-full rounded-xl border border-[#E5E7EB] px-3 py-3 text-left text-[14px] text-[#6B7280]">Reason: {result.reason}</p>
+            <div className="mt-5 w-full text-left">
+              <p className="text-[13px] uppercase text-[#DC2626]">What may have happened</p>
+              {["Insufficient funds in your account", "Your bank blocked the transaction", "Card details entered incorrectly"].map((t, i) => (
+                <p key={t} className="mt-2 flex items-center gap-3 text-[14px] text-[#6B7280]">
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-[#FEE2E2] text-[11px] text-[#DC2626]">{i + 1}</span>
+                  {t}
+                </p>
+              ))}
+            </div>
+          </ResultScreen>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="ml-[324px] flex flex-col min-h-screen bg-[#FEFEFE]">
-      {/* Header */}
-      <div className="flex items-center gap-4 px-8 py-5 border-b border-[#F3F4F6]">
-        <button
-          onClick={() => step === "amount" ? router.back() : setStep("amount")}
-          className="inline-flex items-center gap-2 text-body text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={20}  /> Back
-        </button>
-        <h1 className="text-[24px] font-semibold text-text-primary">Fund Wallet</h1>
-      </div>
+    <div className="flex flex-col pt-8">
+      <BackLink href="/founder/wallet" label={step === 1 ? "Back to wallet" : "Back"} onClick={step > 1 ? () => setStep(step - 1) : undefined} />
+      <FlowProgress step={step} />
 
-      <div className="flex-1 px-8 py-8 max-w-lg">
-
-        {/* ── Step 1: Amount ── */}
-        {step === "amount" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-[24px] font-semibold text-text-primary">Choose Amount</h2>
-              <p className="text-body text-text-secondary mt-1">Minimum funding: ₦1,000</p>
-            </div>
-
-            {/* Quick amounts */}
-            <div className="grid grid-cols-3 gap-3">
-              {QUICK_AMOUNTS.map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setAmount(amt.toString())}
-                  className={cn(
-                    "py-4 rounded-xl border text-body font-medium transition-all",
-                    amount === amt.toString()
-                      ? "bg-brand-primary border-brand-primary text-white"
-                      : "bg-white border-[#E5E7EB] text-text-primary hover:border-brand-primary"
-                  )}
-                >
-                  ₦{amt >= 1000 ? `${amt / 1000}k` : amt}
-                </button>
-              ))}
-            </div>
-
-            <div>
-              <label className="tiqra-label">Custom Amount (₦)</label>
+      {step === 1 && (
+        <>
+          <PageTitle className="mt-8" title="Add amount" subtitle="Enter amount" />
+          <div className="mt-8 flex flex-col gap-4 sm:px-4">
+            <p className="text-[16px] uppercase text-[#111827]">Quick amount</p>
+            <AmountChips amounts={[10000, 25000, 50000, 100000]} value={amount} onPick={(n) => setAmountInput(n.toLocaleString())} />
+            <label className="mt-2 flex flex-col gap-2">
+              <span className="text-[16px] text-[#111827]">Enter Amount</span>
               <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter custom amount..."
-                className="tiqra-input text-[20px]"
+                inputMode="numeric"
+                value={amountInput ? `₦${amountInput}` : ""}
+                onChange={(e) => {
+                  const d = e.target.value.replace(/\D/g, "");
+                  setAmountInput(d ? Number(d).toLocaleString() : "");
+                }}
+                placeholder="₦0"
+                className="h-12 rounded-xl border border-[#E5E7EB] px-3 text-[14px] text-[#111827] focus:border-[#4F46E5] focus:outline-none"
               />
-            </div>
-
-            <button
-              onClick={() => setStep("method")}
-              disabled={!canContinue}
-              className="btn-primary w-full justify-center disabled:opacity-40"
-            >
-              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
-            </button>
+              <span className={cn("text-[12px]", amount && amount < MIN_TOPUP ? "text-[#DC2626]" : "text-[#6B7280]")}>
+                Minimum top-up is {formatNairaShort(MIN_TOPUP)}
+              </span>
+            </label>
+            <SummaryCard
+              title="Summary"
+              rows={[
+                ["Amount to be added", formatNairaShort(amount)],
+                ["Processing fees", "₦0.00"],
+                ["Total", formatNairaShort(amount)],
+              ]}
+            />
           </div>
-        )}
+          <button disabled={amount < MIN_TOPUP} onClick={() => setStep(2)} className={cn(primaryBtn, "mx-auto mt-4 h-[52px] w-full max-w-[400px]")}>
+            Proceed to Card Details <HugeiconsIcon icon={ArrowRight02Icon} size={20} />
+          </button>
+        </>
+      )}
 
-        {/* ── Step 2: Payment Method ── */}
-        {step === "method" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-[24px] font-semibold text-text-primary">Payment Method</h2>
-              <p className="text-body text-text-secondary mt-1">How would you like to pay ₦{amtNum.toLocaleString()}?</p>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              {[
-                { key: "card" as const, label: "Debit / Credit Card", sub: "Instant – Visa, Mastercard, Verve", icon: CreditCardIcon, color: "#EDE9FE", iconColor: "text-brand-primary" },
-                { key: "transfer" as const, label: "Bank Transfer", sub: "Pay via USSD or internet banking", icon: Add01Icon, color: "#DCFCE7", iconColor: "text-[#16A34A]" },
-              ].map(({ key, label, sub, icon: Icon, color, iconColor }) => (
-                <button
-                  key={key}
-                  onClick={() => setPayMethod(key)}
-                  className={cn(
-                    "flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-all",
-                    payMethod === key ? "border-brand-primary bg-[#FDFAFF]" : "border-[#E5E7EB] bg-white hover:border-brand-primary"
-                  )}
-                >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color }}>
-                    <HugeiconsIcon icon={Icon} size={24} className={iconColor} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-body font-semibold text-text-primary">{label}</p>
-                    <p className="text-sm text-text-secondary">{sub}</p>
-                  </div>
-                  <div className={cn(
-                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                    payMethod === key ? "border-brand-primary bg-brand-primary" : "border-[#E5E7EB]"
-                  )}>
-                    {payMethod === key && <div className="w-2 h-2 rounded-full bg-white" />}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-[#F8F9FC] rounded-2xl p-5 flex flex-col gap-2">
-              <div className="flex justify-between text-body">
-                <span className="text-text-secondary">Amount</span>
-                <span className="text-text-primary font-semibold">₦{amtNum.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-body">
-                <span className="text-text-secondary">Processing Fee</span>
-                <span className="text-[#16A34A] font-semibold">Free</span>
-              </div>
-              <div className="h-px bg-[#E5E7EB] my-1" />
-              <div className="flex justify-between text-body">
-                <span className="text-text-primary font-semibold">Total</span>
-                <span className="text-[24px] font-bold text-text-primary">₦{amtNum.toLocaleString()}</span>
-              </div>
-            </div>
-
-            <button
-              onClick={handlePay}
-              disabled={!payMethod}
-              className="btn-primary w-full justify-center disabled:opacity-40 text-lg"
-            >
-              Pay ₦{amtNum.toLocaleString()}
-            </button>
+      {step === 2 && (
+        <>
+          <PageTitle className="mt-8" title="Card details" subtitle="Payment information" />
+          <div className="mt-8 flex flex-col gap-3 sm:px-4">
+            {cards.map((c) => (
+              <label key={c.$id} className={cn("flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3", selected === c.$id ? "border-[#4F46E5] bg-[#EEF2FF]" : "border-[#E5E7EB]")}>
+                <input type="radio" name="card" checked={selected === c.$id} onChange={() => setSelected(c.$id)} className="accent-[#4F46E5]" />
+                <CardBrand />
+                <span className="flex-1 text-[15px] text-[#111827]">**** **** **** {c.last4}</span>
+                <span className="text-[13px] text-[#6B7280]">Exp {c.expiry}</span>
+              </label>
+            ))}
+            {cards.length > 0 && (
+              <label className={cn("flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3", selected === "new" ? "border-[#4F46E5] bg-[#EEF2FF]" : "border-[#E5E7EB]")}>
+                <input type="radio" name="card" checked={selected === "new"} onChange={() => setSelected("new")} className="accent-[#4F46E5]" />
+                <span className="text-[15px] text-[#111827]">Use a new card</span>
+              </label>
+            )}
+            {selected === "new" && <CardForm value={card} onChange={setCard} />}
+            {cardErr && <p className="text-[14px] text-[#DC2626]">{cardErr}</p>}
           </div>
-        )}
-      </div>
+          <button onClick={toReview} className={cn(primaryBtn, "mx-auto mt-6 h-[46px] w-full max-w-[350px]")}>
+            Save and review payment <HugeiconsIcon icon={ArrowRight02Icon} size={20} />
+          </button>
+        </>
+      )}
+
+      {step === 3 && (
+        <>
+          <PageTitle className="mt-8" title="Review & confirm" subtitle="Confirm your payment" />
+          <div className="mt-8 flex flex-col gap-4 sm:px-4">
+            <div className="rounded-[24px] bg-[#F8F9FC]">
+              <p className="border-b border-[#E5E7EB] px-4 py-4 text-[20px] font-medium tracking-[-0.02em] text-[#111827]">Payment Method</p>
+              <div className="flex items-center gap-3 px-4 py-4">
+                <CardBrand />
+                <div className="flex-1">
+                  <p className="text-[15px] text-[#111827]">**** **** **** {savedCard?.last4 ?? card.number.replace(/\D/g, "").slice(-4)}</p>
+                  <p className="text-[14px] text-[#6B7280]">
+                    {savedCard?.holderName ?? card.name} . Exp {savedCard?.expiry ?? card.expiry}
+                  </p>
+                </div>
+                <button onClick={() => setStep(2)} className="text-[14px] text-[#4F46E5]">Change</button>
+              </div>
+            </div>
+            <SummaryCard
+              title="Summary"
+              rows={[
+                ["Amount to be added", formatNairaShort(amount)],
+                ["Processing fees", "₦0.00"],
+                ["Current balance", formatNairaFull(balance)],
+                ["Total", formatNairaFull(balance + amount)],
+              ]}
+            />
+          </div>
+          <button disabled={processing} onClick={pay} className={cn(primaryBtn, "mx-auto mt-4 h-[52px] w-full max-w-[400px]")}>
+            Confirm and pay <HugeiconsIcon icon={ArrowRight02Icon} size={20} />
+          </button>
+        </>
+      )}
+
+      <LoadingModal
+        open={processing}
+        title="Processing your payment"
+        subtitle={`Please wait while we securely process your ${formatNairaShort(amount)} top-up`}
+      />
     </div>
   );
 }

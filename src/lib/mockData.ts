@@ -1,4 +1,4 @@
-import { User, Survey, Transaction, Wallet, Response, Idea, Question } from "./types";
+import { User, Survey, Transaction, Wallet, Response, Idea, Question, PaymentMethod } from "./types";
 
 export const MOCK_USERS: User[] = [
   {
@@ -33,9 +33,9 @@ export const MOCK_WALLETS: Wallet[] = [
   {
     $id: "wallet_earner_001",
     userId: "user_earner_001",
-    balance: 0,
+    balance: 1200,
     pendingBalance: 0,
-    totalEarned: 0,
+    totalEarned: 1200,
     totalSpent: 0,
   },
 ];
@@ -47,6 +47,10 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
   { $id: "tx_f2", userId: "user_founder_001", type: "escrow", amount: 25000, description: "AI resume builder", status: "completed", balanceAfter: 0, createdAt: at("2026-04-06T11:30:00") },
   { $id: "tx_f3", userId: "user_founder_001", type: "escrow", amount: 50000, description: "Campus Swap", status: "completed", balanceAfter: 25000, createdAt: at("2026-04-04T11:30:00") },
   { $id: "tx_f4", userId: "user_founder_001", type: "credit", amount: 100000, description: "Added funds to wallet via Paystack", status: "completed", reference: "tiqra_mock_ref_4", balanceAfter: 75000, createdAt: at("2026-04-02T10:30:00") },
+  { $id: "tx_e1", userId: "user_earner_001", type: "credit", amount: 300, description: "Reward: Coffee buying behaviour", status: "completed", createdAt: at("2026-04-02T10:30:00") },
+  { $id: "tx_e2", userId: "user_earner_001", type: "credit", amount: 300, description: "Reward: Mobile banking habits", status: "completed", createdAt: at("2026-04-03T10:30:00") },
+  { $id: "tx_e3", userId: "user_earner_001", type: "credit", amount: 300, description: "Reward: Online grocery preference", status: "completed", createdAt: at("2026-04-04T10:30:00") },
+  { $id: "tx_e4", userId: "user_earner_001", type: "credit", amount: 300, description: "Reward: Fitness app habits", status: "completed", createdAt: at("2026-04-05T10:30:00") },
   { $id: "tx_f5", userId: "user_founder_001", type: "escrow", amount: 25000, description: "StudyBuddy", status: "completed", balanceAfter: 0, createdAt: at("2026-03-24T11:30:00") },
 ];
 
@@ -157,7 +161,23 @@ export const MOCK_SURVEYS: Survey[] = [
   seedSurvey("survey_diabetes", "Meal plan generator for diabetes", "Generic meal plans don't account for medical needs", "draft", 50, 0),
 ];
 
-export const MOCK_RESPONSES: Response[] = [];
+export const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
+  { $id: "pm_card_1", userId: "user_founder_001", kind: "card", provider: "Mastercard", last4: "4242", holderName: "Haleemah Abdulazeez", expiry: "09/27", isDefault: true, createdAt: at("2026-03-01T09:00:00") },
+  { $id: "pm_bank_1", userId: "user_earner_001", kind: "bank", provider: "GTBank", last4: "6789", holderName: "Haleemah Abdulazeez", isDefault: true, createdAt: at("2026-03-01T09:00:00") },
+  { $id: "pm_bank_2", userId: "user_earner_001", kind: "bank", provider: "Opay", last4: "3004", holderName: "Haleemah Abdulazeez", isDefault: false, createdAt: at("2026-03-02T09:00:00") },
+];
+
+// Earner history: surveys already answered and paid out.
+export const MOCK_RESPONSES: Response[] = ["survey_coffee", "survey_banking_old", "survey_grocery_old", "survey_fitness"].map((surveyId, i) => ({
+  $id: `resp_seed_${i}`,
+  surveyId,
+  respondentId: "user_earner_001",
+  answers: [],
+  validatedByTruthLayer: true,
+  flagged: false,
+  completedAt: at(`2026-04-0${i + 2}T10:30:00`),
+  timeTaken: 240,
+}));
 
 export const MOCK_IDEAS: Idea[] = [
   {
@@ -202,6 +222,7 @@ export const runtimeData = {
   transactions: [...MOCK_TRANSACTIONS],
   surveys: [...MOCK_SURVEYS],
   responses: [...MOCK_RESPONSES],
+  paymentMethods: [...MOCK_PAYMENT_METHODS],
   ideas: [...MOCK_IDEAS],
   sessions: [] as { userId: string; sessionId: string; token: string }[],
 };

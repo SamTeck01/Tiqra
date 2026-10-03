@@ -40,17 +40,26 @@ export const mockAccount = {
   },
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function table(collectionId: string): any[] {
+  const map: Record<string, keyof typeof runtimeData> = {
+    [COLLECTIONS.USERS]: "users",
+    [COLLECTIONS.WALLETS]: "wallets",
+    [COLLECTIONS.TRANSACTIONS]: "transactions",
+    [COLLECTIONS.SURVEYS]: "surveys",
+    [COLLECTIONS.RESPONSES]: "responses",
+    [COLLECTIONS.IDEAS]: "ideas",
+    [COLLECTIONS.PAYMENT_METHODS]: "paymentMethods",
+  };
+  const key = map[collectionId];
+  if (!key) throw new Error(`Unknown collection ${collectionId}`);
+  return runtimeData[key] as any[];
+}
+
 export const mockDatabases = {
   listDocuments: async (dbId: string, collectionId: string, queries: string[] = []) => {
     await delay(300);
-    let data: any[] = [];
-    if (collectionId === COLLECTIONS.USERS) data = runtimeData.users;
-    else if (collectionId === COLLECTIONS.WALLETS) data = runtimeData.wallets;
-    else if (collectionId === COLLECTIONS.TRANSACTIONS) data = runtimeData.transactions;
-    else if (collectionId === COLLECTIONS.SURVEYS) data = runtimeData.surveys;
-    else if (collectionId === COLLECTIONS.RESPONSES) data = runtimeData.responses;
-    else if (collectionId === COLLECTIONS.IDEAS) data = runtimeData.ideas;
-
+    let data = [...table(collectionId)];
     // Apply the equal() filters. Appwrite v16 serialises queries as JSON.
     for (const q of queries) {
       try {
@@ -62,21 +71,12 @@ export const mockDatabases = {
         // Not a JSON query; ignore.
       }
     }
-
     return { documents: data, total: data.length };
   },
 
   getDocument: async (dbId: string, collectionId: string, docId: string) => {
     await delay(200);
-    let data: any[] = [];
-    if (collectionId === COLLECTIONS.USERS) data = runtimeData.users;
-    else if (collectionId === COLLECTIONS.WALLETS) data = runtimeData.wallets;
-    else if (collectionId === COLLECTIONS.TRANSACTIONS) data = runtimeData.transactions;
-    else if (collectionId === COLLECTIONS.SURVEYS) data = runtimeData.surveys;
-    else if (collectionId === COLLECTIONS.RESPONSES) data = runtimeData.responses;
-    else if (collectionId === COLLECTIONS.IDEAS) data = runtimeData.ideas;
-
-    const doc = data.find((d) => d.$id === docId);
+    const doc = table(collectionId).find((d) => d.$id === docId);
     if (!doc) throw new Error("Document not found");
     return doc;
   },
@@ -84,28 +84,24 @@ export const mockDatabases = {
   createDocument: async (dbId: string, collectionId: string, docId: string, docData: any) => {
     await delay(400);
     const newDoc = { $id: docId, ...docData };
-    if (collectionId === COLLECTIONS.USERS) runtimeData.users.push(newDoc);
-    else if (collectionId === COLLECTIONS.WALLETS) runtimeData.wallets.push(newDoc);
-    else if (collectionId === COLLECTIONS.TRANSACTIONS) runtimeData.transactions.push(newDoc);
-    else if (collectionId === COLLECTIONS.SURVEYS) runtimeData.surveys.push(newDoc);
-    else if (collectionId === COLLECTIONS.RESPONSES) runtimeData.responses.push(newDoc);
-    else if (collectionId === COLLECTIONS.IDEAS) runtimeData.ideas.push(newDoc);
+    table(collectionId).push(newDoc);
     return newDoc;
   },
 
   updateDocument: async (dbId: string, collectionId: string, docId: string, docData: any) => {
     await delay(400);
-    let data: any[] = [];
-    if (collectionId === COLLECTIONS.USERS) data = runtimeData.users;
-    else if (collectionId === COLLECTIONS.WALLETS) data = runtimeData.wallets;
-    else if (collectionId === COLLECTIONS.TRANSACTIONS) data = runtimeData.transactions;
-    else if (collectionId === COLLECTIONS.SURVEYS) data = runtimeData.surveys;
-    else if (collectionId === COLLECTIONS.RESPONSES) data = runtimeData.responses;
-    else if (collectionId === COLLECTIONS.IDEAS) data = runtimeData.ideas;
-
+    const data = table(collectionId);
     const index = data.findIndex((d) => d.$id === docId);
     if (index === -1) throw new Error("Document not found");
     data[index] = { ...data[index], ...docData };
     return data[index];
+  },
+
+  deleteDocument: async (dbId: string, collectionId: string, docId: string) => {
+    await delay(300);
+    const data = table(collectionId);
+    const index = data.findIndex((d) => d.$id === docId);
+    if (index !== -1) data.splice(index, 1);
+    return {};
   },
 };

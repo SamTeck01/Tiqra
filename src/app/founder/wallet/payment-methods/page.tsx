@@ -1,5 +1,5 @@
 import { BankAccountList } from "@/components/wallet/BankAccounts";
 
 export default function PaymentMethodsPage() {
-  return <BankAccountList basePath="/earner/wallet" />;
+  return <BankAccountList basePath="/founder/wallet" />;
 }
