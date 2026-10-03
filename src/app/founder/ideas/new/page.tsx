@@ -7,7 +7,7 @@ import { Alert02Icon, Mic01Icon, StopIcon } from "@hugeicons/core-free-icons";
 import { useSurveyStore } from "@/store/survey.store";
 import Modal, { LoadingModal } from "@/components/ui/Modal";
 import { BackLink, ghostBtn, outlineBtn, primaryBtn } from "@/components/ui/Primitives";
-import { structureIdea } from "@/lib/ai";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 // Minimal typing for the browser Web Speech API (not in lib.dom for all targets).
@@ -72,7 +72,7 @@ export default function VoiceIntakePage() {
     setListening(false);
     if (!transcript.trim()) return;
     setUnderstanding(true);
-    const intake = await structureIdea(transcript);
+    const intake = await api("structureIdea", { transcript });
     setDraftField("source", "voice");
     setDraftField("intake", intake);
     router.push("/founder/ideas/new/review");

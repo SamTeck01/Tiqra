@@ -11,7 +11,8 @@ export const mockAccount = {
     // Just return a mock account response
     return { $id: id, email, name, registration: new Date().toISOString() };
   },
-  createEmailPasswordSession: async (email: string, password?: string) => {
+  // The demo accepts any password.
+  createEmailPasswordSession: async (email: string) => {
     await delay(500);
     const user = runtimeData.users.find((u) => u.email === email);
     if (!user) throw new Error("Invalid credentials");

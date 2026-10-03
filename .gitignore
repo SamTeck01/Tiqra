@@ -1,2 +1,8 @@
 node_modules
 .next
+
+# Local secrets. Never commit real keys.
+.env
+.env*.local
+
+*.tsbuildinfo

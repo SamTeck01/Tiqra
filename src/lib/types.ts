@@ -40,6 +40,7 @@ export interface User {
 }
 
 export interface UserDemographics {
+  country?: string;
   gender: string;
   occupation: string;
   birthMonth: string;
@@ -77,8 +78,14 @@ export interface Survey {
   confidence?: number;
 }
 
+/** Which validation dimension a question measures; drives the report scores. */
+export type DimensionKey = "problem" | "behaviour" | "willingness" | "repeat";
+
 export interface Question {
   id: string;
+  dimension?: DimensionKey;
+  /** For a contradiction check: the id of a question asking the same thing the opposite way. */
+  reverseOf?: string;
   text: string;
   type: QuestionType;
   options?: string[];
@@ -93,6 +100,8 @@ export interface TargetAudience {
   country: string;
   ageRange: { min: number; max: number };
   interests?: string[];
+  /** Respondents below this reliability score don't see the survey. */
+  minReliability?: number;
 }
 
 export interface Response {
@@ -103,6 +112,8 @@ export interface Response {
   validatedByTruthLayer: boolean;
   flagged: boolean;
   flagReason?: string;
+  /** Truth Layer quality score, 0-100. */
+  qualityScore?: number;
   completedAt: string;
   timeTaken: number;
 }

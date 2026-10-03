@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { databases, DB_ID, COLLECTIONS } from "@/lib/appwrite";
 import { Survey, Question, IdeaIntake } from "@/lib/types";
-import { EMPTY_INTAKE } from "@/lib/ai";
+import { EMPTY_INTAKE } from "@/lib/survey";
 import { MIN_RESPONDENTS } from "@/lib/pricing";
 import { ID, Query } from "appwrite";
 
@@ -35,7 +35,7 @@ const defaultDraft: NewSurveyDraft = {
   respondents: MIN_RESPONDENTS,
 };
 
-export const useSurveyStore = create<SurveyState>((set, get) => ({
+export const useSurveyStore = create<SurveyState>((set) => ({
   surveys: [],
   activeSurvey: null,
   draft: { ...defaultDraft },

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 /** "Review your description" — what the AI understood from the voice intake. */
 export default function ReviewDescriptionPage() {
   const { draft, setDraftField } = useSurveyStore();
-  const { generating, generate } = useGenerateQuestions();
+  const { generating, generate, error: genError } = useGenerateQuestions();
   const [editing, setEditing] = useState(false);
   const ready = REQUIRED_FIELDS.every((k) => draft.intake[k].trim());
 
@@ -47,6 +47,7 @@ export default function ReviewDescriptionPage() {
         Generate AI Question <HugeiconsIcon icon={ArrowRight02Icon} size={20} />
       </button>
 
+      {genError && <p className="mt-3 text-center text-[14px] text-[#DC2626]">{genError}</p>}
       <BuildingSurveyModal open={generating} />
     </div>
   );

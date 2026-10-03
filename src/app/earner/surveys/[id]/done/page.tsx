@@ -4,13 +4,25 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Tick02Icon } from "@hugeicons/core-free-icons";
-import { useSurvey } from "@/components/shared/useSurvey";
+import { useEarnerStore } from "@/store/earner.store";
 import { ghostBtn, primaryBtn } from "@/components/ui/Primitives";
 import { cn, formatNairaFull } from "@/lib/utils";
 
 export default function SurveySubmittedPage() {
-  const { id } = useParams<{ id: string }>();
-  const { survey } = useSurvey(id);
+  useParams();
+  const result = useEarnerStore((s) => s.lastResult);
+
+  if (result && !result.accepted) {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-[473px] flex-col items-center justify-center px-4 text-center">
+        <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">Response not accepted</h1>
+        <p className="mt-2 text-[16px] text-[#6B7280]">
+          Our quality checks flagged this response ({result.flags.join(", ").toLowerCase()}), so it can&apos;t be paid. Careful, honest answers raise your reliability score and unlock more surveys.
+        </p>
+        <Link href="/earner/surveys" className={cn(primaryBtn, "mt-6 h-[47px] w-full")}>Browse more survey</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[473px] flex-col items-center justify-center px-4 text-center">
@@ -25,7 +37,7 @@ export default function SurveySubmittedPage() {
       <div className="mt-6 w-full rounded-[24px] bg-[#E8F8EE] px-5 py-5 text-left">
         <p className="flex items-center gap-3 text-[14px] text-[#111827]">
           You earned
-          <span className="text-[22px] text-[#16A34A]">{survey ? formatNairaFull(survey.payoutPerResponse) : "—"}</span>
+          <span className="text-[22px] text-[#16A34A]">{result ? formatNairaFull(result.reward) : "—"}</span>
         </p>
         <p className="mt-2 text-[14px] text-[#111827]">The reward will be added to your wallet once the survey is approved.</p>
       </div>

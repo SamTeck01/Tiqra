@@ -1,4 +1,6 @@
-import { User, Survey, Transaction, Wallet, Response, Idea, Question, PaymentMethod } from "./types";
+import { User, Survey, Transaction, Wallet, Response, Idea, Question, PaymentMethod, DimensionKey } from "./types";
+import { paidQuestionCount, withAttentionCheck } from "./survey";
+import { analyzeSurvey } from "./engine/analytics";
 
 export const MOCK_USERS: User[] = [
   {
@@ -55,56 +57,40 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
 ];
 
 
-type Q = [string, Question["type"], string[]?];
+type Q = [string, Question["type"], string[]?, DimensionKey?];
 
 function questions(list: Q[]): Question[] {
-  return list.map(([text, type, options], i) => ({ id: `q_${i + 1}`, text, type, options, required: true, order: i + 1 }));
+  return list.map(([text, type, options, dimension], i) => ({ id: `q_${i + 1}`, text, type, options, dimension, required: true, order: i + 1 }));
 }
 
-/** Truth Layer attention check, slotted into every seeded survey. */
-const HONEYPOT: Question = {
-  id: "q_check",
-  text: "For quality control, please select 'Agree' to continue.",
-  type: "multiple_choice",
-  options: ["Disagree", "Neutral", "Agree"],
-  isHoneypot: true,
-  honeypotAnswer: "Agree",
-  required: true,
-  order: 0,
-};
-
-function withCheck(qs: Question[], at = 3): Question[] {
-  const out = [...qs];
-  out.splice(at, 0, HONEYPOT);
-  return out.map((q, i) => ({ ...q, order: i + 1 }));
-}
+const withCheck = (qs: Question[]) => withAttentionCheck(qs, 3);
 
 const BANKING = withCheck(
   questions([
-    ["How often do you use mobile banking app?", "multiple_choice", ["Daily", "A few times a week", "Weekly", "Rarely"]],
+    ["How often do you use mobile banking app?", "multiple_choice", ["Daily", "A few times a week", "Weekly", "Rarely"], "behaviour"],
     ["How satisfied are you with your current bank?", "scale"],
     ["What feature matters most to you?", "multiple_choice", ["Speed", "Security", "Rewards", "Simplicity"]],
     ["What would make a banking app feel premium to you?", "short_text"],
     ["Which best describes your ideal banking app?", "multiple_choice", ["Minimal", "Feature-Rich", "Social", "Gamified"]],
-    ["Have you switched banks in the last two years?", "yes_no"],
-    ["How much do you trust app-only banks?", "scale"],
+    ["Have you switched banks in the last two years?", "yes_no", undefined, "behaviour"],
+    ["How much do you trust app-only banks?", "scale", undefined, "problem"],
     ["How do you usually send money to friends?", "multiple_choice", ["Bank transfer", "USSD", "Mobile wallet", "Cash"]],
-    ["Would you pay a monthly fee for premium banking features?", "yes_no"],
-    ["What is the most annoying thing about your banking app today?", "short_text"],
+    ["Would you pay a monthly fee for premium banking features?", "yes_no", undefined, "willingness"],
+    ["What is the most annoying thing about your banking app today?", "short_text", undefined, "problem"],
   ])
 );
 
 const GENERIC = withCheck(
   questions([
-    ["How often do you face this problem?", "multiple_choice", ["Daily", "A few times a week", "Rarely", "Never"]],
-    ["How frustrating is the way you deal with it today?", "scale"],
-    ["Do you currently use any tool or app for this?", "yes_no"],
-    ["What is the biggest challenge with your current option?", "short_text"],
-    ["How useful would a new solution be to you?", "scale"],
-    ["Would you pay for a solution like this?", "yes_no"],
-    ["How much would you be willing to pay per month?", "multiple_choice", ["Nothing", "Under ₦1,000", "₦1,000 – ₦3,000", "Above ₦3,000"]],
-    ["How likely are you to keep using it after the first month?", "scale"],
-    ["Would you recommend a tool like this to a friend?", "yes_no"],
+    ["How often do you face this problem?", "multiple_choice", ["Daily", "A few times a week", "Rarely", "Never"], "problem"],
+    ["How frustrating is the way you deal with it today?", "scale", undefined, "problem"],
+    ["Do you currently use any tool or app for this?", "yes_no", undefined, "behaviour"],
+    ["What is the biggest challenge with your current option?", "short_text", undefined, "problem"],
+    ["How useful would a new solution be to you?", "scale", undefined, "behaviour"],
+    ["Would you pay for a solution like this?", "yes_no", undefined, "willingness"],
+    ["How much would you be willing to pay per month?", "multiple_choice", ["Nothing", "Under ₦1,000", "₦1,000 – ₦3,000", "Above ₦3,000"], "willingness"],
+    ["How likely are you to keep using it after the first month?", "scale", undefined, "repeat"],
+    ["Would you recommend a tool like this to a friend?", "yes_no", undefined, "repeat"],
     ["What would stop you from using a tool like this?", "short_text"],
   ])
 );
@@ -121,7 +107,7 @@ function seedSurvey(
   extra: Partial<Survey> = {}
 ): Survey {
   const qs = extra.questions ?? GENERIC;
-  const payoutPerResponse = qs.filter((q) => !q.isHoneypot).length * 30;
+  const payoutPerResponse = paidQuestionCount(qs) * 30;
   const payout = payoutPerResponse * required;
   return {
     $id: id,
@@ -149,9 +135,9 @@ export const MOCK_SURVEYS: Survey[] = [
   seedSurvey("survey_invoice", "Freelancer Invoice Tools", "Invoicing and reminders for freelancers", "live", 50, 20),
   seedSurvey("survey_meal", "Student Meal Planner App", "Affordable meals near campus", "live", 50, 47),
   seedSurvey("survey_standup", "Remote Team Standup Bot", "Async standups for remote teams", "live", 50, 18),
-  seedSurvey("survey_artisan", "Local artisan marketplace", "Connecting local artisans to urban buyers", "completed", 80, 80, { verdict: "go", confidence: 84, createdAt: at("2026-04-12T09:00:00") }),
-  seedSurvey("survey_tutoring", "On-demand tutoring for SS3", "Exam prep tutors on demand for SS3 students", "completed", 60, 60, { verdict: "pivot", confidence: 41, createdAt: at("2026-04-04T09:00:00") }),
-  seedSurvey("survey_crypto", "Crypto rewards for gamers", "Paying gamers in crypto for achievements", "completed", 50, 50, { verdict: "kill", confidence: 21, createdAt: at("2026-03-20T09:00:00") }),
+  seedSurvey("survey_artisan", "Local artisan marketplace", "Connecting local artisans to urban buyers", "completed", 80, 80, { createdAt: at("2026-04-12T09:00:00") }),
+  seedSurvey("survey_tutoring", "On-demand tutoring for SS3", "Exam prep tutors on demand for SS3 students", "completed", 60, 60, { createdAt: at("2026-04-04T09:00:00") }),
+  seedSurvey("survey_crypto", "Crypto rewards for gamers", "Paying gamers in crypto for achievements", "completed", 50, 50, { createdAt: at("2026-03-20T09:00:00") }),
   // Other founders' live surveys, shown to earners.
   seedSurvey("survey_grocery", "Online grocery preference", "How people shop for groceries online", "live", 100, 41, { creatorId: "user_founder_002" }),
   seedSurvey("survey_banking", "Mobile banking habit", "Everyday mobile banking behaviour", "live", 80, 12, { creatorId: "user_founder_002", questions: BANKING }),
@@ -160,6 +146,88 @@ export const MOCK_SURVEYS: Survey[] = [
   seedSurvey("survey_hostel", "Hostel balloting", "Fairer hostel allocation for students", "live", 120, 77, { creatorId: "user_founder_002" }),
   seedSurvey("survey_diabetes", "Meal plan generator for diabetes", "Generic meal plans don't account for medical needs", "draft", 50, 0),
 ];
+
+// ---------------------------------------------------------------------------
+// Synthetic responses so the analytics engine has real data to work with.
+
+function rng(seed: number) {
+  let x = seed || 1;
+  return () => {
+    x = (x * 1103515245 + 12345) % 2147483648;
+    return x / 2147483648;
+  };
+}
+
+const NEGATIVE_OPTIONS = new Set(["Never", "Rarely", "Nothing", "No", "Something else"]);
+const QUOTES: Record<string, string[]> = {
+  high: [
+    "I've been looking for exactly this. The price point is fair for the value it saves.",
+    "If it really works the way you describe, I'd sign up immediately.",
+    "This solves a problem I deal with every single week.",
+  ],
+  mid: [
+    "I like the idea but not at that price. A monthly plan would change everything.",
+    "The problem is real, but I'd want a free trial before paying anything.",
+    "Useful, but I'd only switch if it saved me real time.",
+  ],
+  low: [
+    "I don't really have this problem, so I wouldn't pay for it.",
+    "Too complicated for what it does, I'd stick with what I use now.",
+    "Cool concept on paper, but I don't see myself using it.",
+  ],
+};
+
+/** Favourable-answer probability per dimension for each seeded idea. */
+const BIAS: Record<string, Partial<Record<DimensionKey | "base", number>>> = {
+  survey_artisan: { base: 0.82, willingness: 0.72 },
+  survey_tutoring: { base: 0.62, problem: 0.85, willingness: 0.3 },
+  survey_crypto: { base: 0.3, willingness: 0.12 },
+};
+
+function seedResponses(survey: Survey, index: number): Response[] {
+  const rand = rng(index * 7919 + 17);
+  const bias = BIAS[survey.$id] ?? { base: 0.66, willingness: 0.5 };
+  const start = new Date(survey.createdAt).getTime();
+  return Array.from({ length: survey.respondentsCompleted }, (_, n) => {
+    const answers = survey.questions.map((q) => {
+      const p = (q.dimension && bias[q.dimension]) ?? bias.base ?? 0.6;
+      const good = rand() < p;
+      let value: string | number;
+      if (q.isHoneypot) value = q.honeypotAnswer!;
+      else if (q.type === "scale") value = Math.max(1, Math.min(5, Math.round(1 + 4 * p + (rand() - 0.5) * 2)));
+      else if (q.type === "yes_no") value = good ? "Yes" : "No";
+      else if (q.type === "multiple_choice") {
+        const opts = q.options ?? [];
+        const pool = opts.filter((o) => NEGATIVE_OPTIONS.has(o) !== good);
+        value = (pool.length ? pool : opts)[Math.floor(rand() * (pool.length || opts.length))];
+      } else {
+        const tone = p > 0.7 ? "high" : p > 0.45 ? "mid" : "low";
+        value = QUOTES[tone][Math.floor(rand() * 3)];
+      }
+      return { questionId: q.id, value, timeTaken: 4000 + Math.floor(rand() * 6000) };
+    });
+    return {
+      $id: `seed_${survey.$id}_${n}`,
+      surveyId: survey.$id,
+      respondentId: `seed_respondent_${n}`,
+      answers,
+      validatedByTruthLayer: true,
+      flagged: false,
+      qualityScore: 100,
+      completedAt: new Date(start + (n + 1) * (36 / Math.max(1, survey.respondentsCompleted)) * 3_600_000).toISOString(),
+      timeTaken: Math.round(answers.reduce((a, x) => a + x.timeTaken, 0) / 1000),
+    };
+  });
+}
+
+const SEEDED_RESPONSES = MOCK_SURVEYS.flatMap((s, i) => seedResponses(s, i + 1));
+
+// Completed ideas carry the verdict the analytics engine computes.
+for (const s of MOCK_SURVEYS.filter((x) => x.status === "completed")) {
+  const a = analyzeSurvey(s, SEEDED_RESPONSES.filter((r) => r.surveyId === s.$id));
+  s.verdict = a.verdict;
+  s.confidence = a.confidence;
+}
 
 export const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
   { $id: "pm_card_1", userId: "user_founder_001", kind: "card", provider: "Mastercard", last4: "4242", holderName: "Haleemah Abdulazeez", expiry: "09/27", isDefault: true, createdAt: at("2026-03-01T09:00:00") },
@@ -221,7 +289,7 @@ export const runtimeData = {
   wallets: [...MOCK_WALLETS],
   transactions: [...MOCK_TRANSACTIONS],
   surveys: [...MOCK_SURVEYS],
-  responses: [...MOCK_RESPONSES],
+  responses: [...MOCK_RESPONSES, ...SEEDED_RESPONSES],
   paymentMethods: [...MOCK_PAYMENT_METHODS],
   ideas: [...MOCK_IDEAS],
   sessions: [] as { userId: string; sessionId: string; token: string }[],

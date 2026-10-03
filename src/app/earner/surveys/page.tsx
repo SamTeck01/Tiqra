@@ -25,7 +25,7 @@ export default function EarnerSurveysPage() {
   const [sort, setSort] = useState<Sort>("reward");
 
   useEffect(() => {
-    if (user?.$id) fetchAvailable(user.$id);
+    if (user?.$id) fetchAvailable();
   }, [user?.$id, fetchAvailable]);
 
   const visible = useMemo(
@@ -70,7 +70,7 @@ export default function EarnerSurveysPage() {
         <div className="flex items-center justify-between py-4">
           <h2 className="text-[20px] font-medium tracking-[-0.02em] text-[#111827]">Available Surveys</h2>
           <button
-            onClick={() => user && fetchAvailable(user.$id)}
+            onClick={() => fetchAvailable()}
             className="inline-flex items-center gap-2 text-[14px] text-[#4F46E5]"
           >
             Refresh <HugeiconsIcon icon={RefreshIcon} size={20} className={cn(loading && "animate-spin")} />
@@ -83,7 +83,7 @@ export default function EarnerSurveysPage() {
         </div>
         {!loading && visible.length === 0 && (
           <p className="rounded-2xl bg-white py-10 text-center text-[14px] text-[#6B7280]">
-            {query ? "No surveys match your search." : "No surveys available right now. Check back soon."}
+            {query ? "No surveys match your search." : !user?.demographics ? "Complete your profile to see surveys that match you." : "No surveys match your profile right now. Check back soon."}
           </p>
         )}
       </section>

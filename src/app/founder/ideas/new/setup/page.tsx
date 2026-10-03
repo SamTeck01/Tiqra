@@ -10,7 +10,7 @@ import { useSurveyStore } from "@/store/survey.store";
 import { useWalletStore } from "@/store/wallet.store";
 import { LoadingModal } from "@/components/ui/Modal";
 import { BackLink, FlowProgress, PageTitle, primaryBtn } from "@/components/ui/Primitives";
-import { surveyTitleFrom } from "@/lib/ai";
+import { api } from "@/lib/api";
 import { MIN_RESPONDENTS, PAY_PER_QUESTION, calculateSurveyCost, estimateCompletion } from "@/lib/pricing";
 import { cn, formatNairaShort } from "@/lib/utils";
 
@@ -26,8 +26,8 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 export default function SetupValidationPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { draft, setDraftField, createSurvey } = useSurveyStore();
-  const { wallet, fetchWallet, payForSurvey } = useWalletStore();
+  const { draft, setDraftField } = useSurveyStore();
+  const { wallet, fetchWallet } = useWalletStore();
   const [respondentsInput, setRespondentsInput] = useState(String(draft.respondents));
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
@@ -51,27 +51,8 @@ export default function SetupValidationPage() {
     if (!user || !valid) return;
     setError("");
     setProcessing(true);
-    const title = surveyTitleFrom(draft.intake);
     try {
-      await payForSurvey(user.$id, cost.total, title);
-      const survey = await createSurvey({
-        title,
-        description: draft.intake.problem,
-        summary: draft.intake.solution || draft.intake.problem,
-        intake: draft.intake,
-        creatorId: user.$id,
-        status: "live",
-        questions: draft.questions,
-        targetAudience: { country: "Nigeria", ageRange: { min: 18, max: 65 } },
-        respondentsRequired: respondents,
-        respondentsCompleted: 0,
-        payoutPerResponse: cost.payoutPerResponse,
-        platformFee: cost.platformFee,
-        totalCost: cost.total,
-        escrowAmount: cost.total,
-        aiReportGenerated: false,
-        createdAt: new Date().toISOString(),
-      });
+      const survey = await api("createSurvey", { intake: draft.intake, questions: draft.questions, respondents });
       setDraftField("respondents", respondents);
       router.push(`/founder/ideas/new/success?id=${survey.$id}`);
     } catch (e) {

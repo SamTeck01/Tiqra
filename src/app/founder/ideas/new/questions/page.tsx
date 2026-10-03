@@ -9,7 +9,7 @@ import EditQuestionModal from "@/components/founder/EditQuestionModal";
 import BuildingSurveyModal from "@/components/founder/BuildingSurveyModal";
 import { useGenerateQuestions } from "@/components/founder/useGenerateQuestions";
 import { BackLink, FlowProgress, PageTitle, outlineBtn, primaryBtn } from "@/components/ui/Primitives";
-import { QUESTION_TYPE_LABEL } from "@/lib/ai";
+import { QUESTION_TYPE_LABEL } from "@/lib/survey";
 import { MIN_QUESTIONS } from "@/lib/pricing";
 import { Question } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export default function PreviewQuestionsPage() {
   const router = useRouter();
   const { draft, setDraftField } = useSurveyStore();
-  const { generating, generate } = useGenerateQuestions();
+  const { generating, generate, error: genError } = useGenerateQuestions();
   const [editing, setEditing] = useState<Question | null>(null);
   const isManual = draft.source === "manual";
 
@@ -71,6 +71,7 @@ export default function PreviewQuestionsPage() {
       </button>
 
       <EditQuestionModal question={editing} onClose={() => setEditing(null)} onSave={save} />
+      {genError && <p className="mt-3 text-center text-[14px] text-[#DC2626]">{genError}</p>}
       <BuildingSurveyModal open={generating} />
     </div>
   );

@@ -44,14 +44,14 @@ function EmptyActivity() {
 
 export default function EarnerDashboard() {
   const { user } = useAuthStore();
-  const { available, responses, fetchAvailable, loading } = useEarnerStore();
+  const { available, completedCount, fetchAvailable, loading } = useEarnerStore();
   const { wallet, transactions, fetchWallet, fetchTransactions } = useWalletStore();
   const [dismissed, setDismissed] = useState(false);
   const needsProfile = !!user && !user.demographics;
 
   useEffect(() => {
     if (!user?.$id) return;
-    fetchAvailable(user.$id);
+    fetchAvailable();
     fetchWallet(user.$id);
     fetchTransactions(user.$id);
   }, [user?.$id, fetchAvailable, fetchWallet, fetchTransactions]);
@@ -71,7 +71,7 @@ export default function EarnerDashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard label="Total earnings" value={formatNairaFull(wallet?.totalEarned ?? 0)} icon={ChartIncreaseIcon} highlighted />
         <StatCard label="Pending earnings" value={formatNairaFull(wallet?.pendingBalance ?? 0)} icon={Clock01Icon} />
-        <StatCard label="Completed Survey" value={String(responses.length)} icon={CheckmarkCircle02Icon} />
+        <StatCard label="Completed Survey" value={String(completedCount)} icon={CheckmarkCircle02Icon} />
       </div>
 
       <section className="rounded-[24px] bg-[#F8F9FC] px-3 pb-3">
@@ -83,7 +83,7 @@ export default function EarnerDashboard() {
         </div>
         {!loading && available.length === 0 && (
           <p className="rounded-2xl bg-white py-10 text-center text-[14px] text-[#6B7280]">
-            No surveys match your profile right now. Check back soon.
+            {needsProfile ? "Complete your profile to see surveys that match you." : "No surveys match your profile right now. Check back soon."}
           </p>
         )}
       </section>

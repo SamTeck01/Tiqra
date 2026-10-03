@@ -6,11 +6,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, ArrowLeft02Icon, ArrowRight02Icon, Cancel01Icon, HelpCircleIcon } from "@hugeicons/core-free-icons";
 import { useAuthStore } from "@/store/auth.store";
 import { useEarnerStore } from "@/store/earner.store";
-import { useSurvey } from "@/components/shared/useSurvey";
+import { api } from "@/lib/api";
 import Modal from "@/components/ui/Modal";
 import { ghostBtn, primaryBtn } from "@/components/ui/Primitives";
-import { AnswerValue, Flag, MAX_STRIKES, checkAnswer, isStrike } from "@/lib/truthLayer";
-import { Answer, Question } from "@/lib/types";
+import { AnswerValue, Flag, MAX_STRIKES, checkAnswer, isStrike } from "@/lib/engine/truthLayer";
+import { Question, Survey } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 function Choice({ label, selected, onSelect }: { label: string; selected: boolean; onSelect: () => void }) {
@@ -77,7 +77,8 @@ export default function AnswerSurveyPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { submitResponse } = useEarnerStore();
-  const { survey } = useSurvey(id);
+  const [survey, setSurvey] = useState<Survey | null>(null);
+  const [loadError, setLoadError] = useState("");
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [times, setTimes] = useState<Record<string, number>>({});
@@ -87,16 +88,29 @@ export default function AnswerSurveyPage() {
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const shownAt = useRef(Date.now());
-  const startedAt = useRef(Date.now());
 
   useEffect(() => {
-    if (user && !user.demographics) router.replace("/earner/profile");
-  }, [user, router]);
+    if (user && !user.demographics) {
+      router.replace("/earner/profile");
+      return;
+    }
+    api("openSurvey", { surveyId: id })
+      .then(setSurvey)
+      .catch((e) => setLoadError(e instanceof Error ? e.message : "Could not open this survey"));
+  }, [user, router, id]);
 
   useEffect(() => {
     shownAt.current = Date.now();
   }, [index]);
 
+  if (loadError) {
+    return (
+      <div className="mx-auto mt-24 max-w-[520px] rounded-[24px] bg-[#F8F9FC] p-8 text-center">
+        <p className="text-[18px] text-[#111827]">{loadError}</p>
+        <button onClick={() => router.replace("/earner/surveys")} className={cn(primaryBtn, "mt-6 h-12 w-full")}>Browse other surveys</button>
+      </div>
+    );
+  }
   if (!survey) return <div className="skeleton mx-auto mt-24 h-[400px] max-w-[600px]" />;
 
   const qs = survey.questions;
@@ -124,11 +138,18 @@ export default function AnswerSurveyPage() {
   };
 
   const submit = async () => {
-    if (!user) return;
     setSubmitting(true);
-    const list: Answer[] = qs.map((x) => ({ questionId: x.id, value: answers[x.id] as string | number, timeTaken: Math.round((times[x.id] ?? 0) / 1000) }));
-    await submitResponse(user.$id, survey, list, Math.round((Date.now() - startedAt.current) / 1000));
-    router.replace(`/earner/surveys/${id}/done`);
+    try {
+      await submitResponse(
+        id,
+        qs.map((x) => ({ questionId: x.id, value: answers[x.id] ?? "", timeTaken: Math.round(times[x.id] ?? 0) }))
+      );
+      router.replace(`/earner/surveys/${id}/done`);
+    } catch (e) {
+      setSubmitting(false);
+      setConfirmSubmit(false);
+      setLoadError(e instanceof Error ? e.message : "Could not submit your answers");
+    }
   };
 
   return (

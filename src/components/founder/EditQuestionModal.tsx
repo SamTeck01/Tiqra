@@ -13,7 +13,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import Modal from "@/components/ui/Modal";
 import { ghostBtn, primaryBtn } from "@/components/ui/Primitives";
-import { QUESTION_TYPE_LABEL, rewriteQuestion } from "@/lib/ai";
+import { QUESTION_TYPE_LABEL } from "@/lib/survey";
+import { api } from "@/lib/api";
 import { Question, QuestionType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +47,11 @@ export default function EditQuestionModal({
   const assist = async (how: string) => {
     if (!how.trim()) return;
     setAssisting(true);
-    setText((await rewriteQuestion(text, how)).slice(0, MAX_LEN));
+    try {
+      setText((await api("rewriteQuestion", { text, instruction: how })).text.slice(0, MAX_LEN));
+    } catch {
+      // Keep the current text if the AI call fails.
+    }
     setInstruction("");
     setAssisting(false);
   };

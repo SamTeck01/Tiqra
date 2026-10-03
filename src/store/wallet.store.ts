@@ -116,7 +116,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       userId,
       type: "credit",
       amount,
-      description: "Added funds to wallet via Paystack",
+      description: `Added funds to wallet via Paystack (${method.provider} •••• ${method.last4})`,
       status: "completed",
       reference: ref,
       balanceAfter: balance,

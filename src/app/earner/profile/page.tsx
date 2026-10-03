@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowDown01Icon, Briefcase01Icon, Calendar03Icon, Tick02Icon, UserIcon } from "@hugeicons/core-free-icons";
 import { useAuthStore } from "@/store/auth.store";
+import { api } from "@/lib/api";
+import { GATE_SECONDS, PublicGateQuestion } from "@/lib/engine/gate";
 import { BackLink, FlowProgress, ghostBtn, primaryBtn } from "@/components/ui/Primitives";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +70,7 @@ function SelectField({ label, icon, value, onChange, options, placeholder, type 
 
 export default function EarnerProfileSetup() {
   const router = useRouter();
-  const { user, updateProfile } = useAuthStore();
+  const { user, completeProfile } = useAuthStore();
   const [step, setStep] = useState(1);
   const [name, setName] = useState(user?.name ?? "");
   const [gender, setGender] = useState("");
@@ -77,21 +79,73 @@ export default function EarnerProfileSetup() {
   const [interests, setInterests] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [gate, setGate] = useState<PublicGateQuestion[]>([]);
+  const [gateIndex, setGateIndex] = useState(0);
+  const [gateAnswers, setGateAnswers] = useState<{ id: string; value: string; ms: number }[]>([]);
+  const [left, setLeft] = useState(GATE_SECONDS);
+  const [shownAt, setShownAt] = useState(0);
+  const [error, setError] = useState("");
+
+  // Countdown for the current check question; time running out counts as a wrong answer.
+  useEffect(() => {
+    if (step !== 4 || gateIndex >= gate.length) return;
+    if (left <= 0) {
+      answerGate("");
+      return;
+    }
+    const t = setTimeout(() => setLeft(left - 1), 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, gateIndex, left, gate.length]);
+
+  const startGate = async () => {
+    setError("");
+    const qs = await api("getGate", { interests });
+    setGate(qs);
+    setGateIndex(0);
+    setGateAnswers([]);
+    setLeft(GATE_SECONDS);
+    setShownAt(Date.now());
+    setStep(4);
+  };
+
+  const answerGate = (value: string) => {
+    const q = gate[gateIndex];
+    if (!q) return;
+    const next = [...gateAnswers, { id: q.id, value, ms: Date.now() - shownAt }];
+    setGateAnswers(next);
+    if (gateIndex + 1 < gate.length) {
+      setGateIndex(gateIndex + 1);
+      setLeft(GATE_SECONDS);
+      setShownAt(Date.now());
+    } else {
+      finish(next);
+    }
+  };
 
   const questions = interests.flatMap((i) => INTEREST_QUESTIONS[i]);
   const toggle = (i: string) =>
     setInterests((cur) => (cur.includes(i) ? cur.filter((x) => x !== i) : cur.length < MAX_INTERESTS ? [...cur, i] : cur));
 
-  const finish = async () => {
+  const finish = async (answersForGate: { id: string; value: string; ms: number }[]) => {
     setSaving(true);
-    await updateProfile({
-      name: name.trim(),
-      demographics: { gender, occupation, birthMonth, interests, interestAnswers: answers, verifiedTags: [] },
-    });
-    setStep(4);
+    setError("");
+    try {
+      await completeProfile({
+        name: name.trim(),
+        demographics: { country: "Nigeria", gender, occupation, birthMonth, interests, interestAnswers: answers },
+        gateAnswers: answersForGate,
+      });
+      setStep(5);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not save your profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  if (step === 4) {
+  if (step === 5) {
+    const verified = user?.demographics?.verifiedTags ?? [];
     return (
       <div className="mx-auto flex min-h-screen max-w-[473px] flex-col items-center justify-center px-4 text-center">
         <span className="flex h-[124px] w-[124px] items-center justify-center rounded-full bg-[#E8F8EE]">
@@ -101,6 +155,9 @@ export default function EarnerProfileSetup() {
         </span>
         <h1 className="mt-6 text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">Profile complete!</h1>
         <p className="mt-2 text-[16px] text-[#6B7280]">Thank you!! Your profile has been set up successfully.</p>
+        <p className="mt-3 text-[14px] text-[#111827]">
+          {verified.length ? <>Verified: <b className="font-semibold text-[#16A34A]">{verified.join(", ")}</b></> : "No interests verified this time. You'll still see general surveys."}
+        </p>
         <div className="mt-6 w-full rounded-[24px] bg-[#E0E7FF] px-5 py-5 text-left">
           <p className="text-[20px] text-[#4F46E5]">What next?</p>
           <p className="mt-2 text-[14px] text-[#111827]">
@@ -116,7 +173,7 @@ export default function EarnerProfileSetup() {
   return (
     <div className="mx-auto max-w-[600px] px-4 pb-16 pt-16 sm:pt-28">
       <BackLink label="Back" onClick={() => (step === 1 ? router.push("/earner/dashboard") : setStep(step - 1))} />
-      <FlowProgress step={step} />
+      <FlowProgress step={step} total={4} />
 
       {step === 1 && (
         <>
@@ -192,12 +249,43 @@ export default function EarnerProfileSetup() {
             ))}
           </div>
           <button
-            disabled={saving || questions.some((q) => !(answers[q] ?? "").trim())}
-            onClick={finish}
+            disabled={questions.some((q) => !(answers[q] ?? "").trim())}
+            onClick={startGate}
             className={cn(primaryBtn, "mt-6 h-[52px] w-full")}
           >
-            {saving ? "Saving..." : "Submit"}
+            Continue
           </button>
+        </>
+      )}
+
+      {step === 4 && (
+        <>
+          <h1 className="mt-6 text-center text-[28px] font-semibold tracking-[-0.03em] text-[#111827]">Quick check</h1>
+          <p className="mx-auto mt-1 max-w-[380px] text-center text-[14px] text-[#6B7280]">
+            {GATE_SECONDS} seconds per question. Answer correctly to get a verified tag on your interests, which unlocks better-paying surveys.
+          </p>
+          {gate[gateIndex] ? (
+            <div className="mt-6">
+              <div className="flex items-center justify-between text-[13px] text-[#6B7280]">
+                <span>{gate[gateIndex].interest} · {gateIndex + 1}/{gate.length}</span>
+                <span className={cn(left <= 5 && "text-[#DC2626]")}>{left}s</span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#EEF2FF]">
+                <div className="h-full bg-[#4F46E5] transition-all" style={{ width: `${(left / GATE_SECONDS) * 100}%` }} />
+              </div>
+              <p className="mt-5 text-[18px] text-[#111827]">{gate[gateIndex].text}</p>
+              <div className="mt-4 flex flex-col gap-2">
+                {gate[gateIndex].options.map((o) => (
+                  <button key={o} disabled={saving} onClick={() => answerGate(o)} className="h-[52px] rounded-xl border border-[#E5E7EB] px-4 text-left text-[15px] text-[#111827] hover:border-[#4F46E5] hover:bg-[#EEF2FF]">
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-8 text-center text-[14px] text-[#6B7280]">{saving ? "Saving your profile..." : ""}</p>
+          )}
+          {error && <p className="mt-4 text-center text-[14px] text-[#DC2626]">{error}</p>}
         </>
       )}
     </div>

@@ -4,22 +4,30 @@ import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChartIncreaseIcon, Money03Icon, QuoteDownIcon, Target02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
 import { Bar as RBar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { useSurvey } from "@/components/shared/useSurvey";
+import { useSurveyData } from "@/components/founder/useSurveyData";
+import DashboardChat from "@/components/founder/DashboardChat";
 import ReportHeader from "@/components/founder/ReportHeader";
 import { Bar } from "@/components/ui/Primitives";
-import { Dimension, TaggedLine, getValidationReport } from "@/lib/reports";
+import type { TaggedLine } from "@/lib/ai/types";
+import { DimensionKey } from "@/lib/types";
 import { STRENGTH_COLOR, VERDICTS, strengthOf } from "@/lib/verdict";
 import { getInitials } from "@/lib/utils";
 
-const DIM_ICON: Record<Dimension["key"], typeof Target02Icon> = {
+const DIM_ICON: Record<DimensionKey, typeof Target02Icon> = {
   problem: Target02Icon,
   behaviour: UserGroupIcon,
   willingness: Money03Icon,
   repeat: ChartIncreaseIcon,
 };
-const SHORT: Record<Dimension["key"], string> = { problem: "Problem", behaviour: "Behaviour", willingness: "Willingness", repeat: "Repeat" };
+const SHORT: Record<DimensionKey, string> = { problem: "Problem", behaviour: "Behaviour", willingness: "Willingness", repeat: "Repeat" };
 
 /** Colour a value by the verdict band it falls in, matching the Figma report variants. */
+const NOTES = {
+  Strong: { problem: "Strong problem awareness", behaviour: "Clear user intent", willingness: "Above viability threshold", repeat: "High retention potential" },
+  Moderate: { problem: "Problem is recognised", behaviour: "Moderate user intent", willingness: "Close to the viability threshold", repeat: "Moderate retention potential" },
+  Weak: { problem: "Weak problem recognition", behaviour: "Low switching intent", willingness: "Below viability threshold", repeat: "No meaningful retention" },
+} as const;
+
 function bandColor(score: number) {
   return score >= 65 ? "#16A34A" : score >= 45 ? "#F59E0B" : "#DC2626";
 }
@@ -44,10 +52,21 @@ function TaggedList({ items }: { items: TaggedLine[] }) {
 
 export default function ValidationReportPage() {
   const { id } = useParams<{ id: string }>();
-  const { survey } = useSurvey(id);
-  if (!survey) return <div className="skeleton mt-14 h-[600px]" />;
+  const { data, error } = useSurveyData("surveyReport", id);
+  if (error) return <p className="mt-14 rounded-2xl bg-[#FEF2F2] p-6 text-[#DC2626]">{error}</p>;
+  if (!data) return <div className="skeleton mt-14 h-[600px]" />;
 
-  const report = getValidationReport(survey);
+  const { survey, analytics: a, narrative, aiConnected } = data;
+  const report = {
+    verdict: a.verdict,
+    confidence: a.confidence,
+    validationScore: a.validationScore,
+    summary: narrative.summary,
+    dimensions: a.dimensions.map((d) => ({ ...d, note: NOTES[strengthOf(d.score)][d.key] })),
+    insights: narrative.insights,
+    nextSteps: narrative.nextSteps,
+    voices: a.quotes.map((quote, i) => ({ quote, name: `Verified respondent ${i + 1}` })),
+  };
   const v = VERDICTS[report.verdict];
   const scoreColor = bandColor(report.validationScore);
   const scoreLabel = report.validationScore >= 65 ? "Strong validation" : report.validationScore >= 45 ? "Moderate validation" : "Weak validation";
@@ -63,7 +82,7 @@ export default function ValidationReportPage() {
         <span>Response: <b className="font-semibold text-[#111827]">{survey.respondentsCompleted} verified</b></span>
         <span>Campaign started: <b className="font-semibold text-[#111827]">{started}</b></span>
         <span>Confidence score: <b className="font-semibold text-[#111827]">{report.confidence}%</b></span>
-        <span>Status: <b className="font-semibold text-[#111827]">Completed</b></span>
+        <span>Status: <b className="font-semibold capitalize text-[#111827]">{survey.status}</b></span>
       </div>
 
       <div className="mx-auto mt-8 flex w-full max-w-[510px] items-center gap-6 rounded-[24px] px-6 py-6" style={{ background: v.tint }}>
@@ -128,7 +147,7 @@ export default function ValidationReportPage() {
       <SectionTitle>Key insights</SectionTitle>
       <TaggedList items={report.insights} />
 
-      <SectionTitle>Respondents voice</SectionTitle>
+      {report.voices.length > 0 && <SectionTitle>Respondents voice</SectionTitle>}
       <div className="mt-3 grid gap-3 md:grid-cols-2">
         {report.voices.map((q) => (
           <div key={q.quote} className="rounded-2xl border border-[#E5E7EB] p-4">
@@ -144,6 +163,9 @@ export default function ValidationReportPage() {
 
       <SectionTitle>Recommended next steps</SectionTitle>
       <TaggedList items={report.nextSteps} />
+      {!aiConnected && <p className="mt-3 text-[12px] text-[#9CA3AF]">Scores are computed from verified responses. Written insights get richer when the AI provider is connected.</p>}
+
+      <DashboardChat surveyId={survey.$id} aiConnected={aiConnected} />
     </div>
   );
 }

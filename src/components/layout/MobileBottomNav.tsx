@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Home01Icon, DashboardSquare01Icon, File01Icon, Wallet01Icon, Settings01Icon, AiContentGenerator01Icon } from "@hugeicons/core-free-icons";
+import { DashboardSquare01Icon, File01Icon, Wallet01Icon, Settings01Icon, AiContentGenerator01Icon } from "@hugeicons/core-free-icons";
 
 const founderNav = [
   { label: "Dashboard", href: "/founder/dashboard", icon: DashboardSquare01Icon, matchExact: true },

@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 export default function ManualIdeaPage() {
   const { draft, setDraftField } = useSurveyStore();
-  const { generating, generate } = useGenerateQuestions();
+  const { generating, generate, error: genError } = useGenerateQuestions();
   const ready = REQUIRED_FIELDS.every((k) => draft.intake[k].trim());
 
   return (
@@ -42,6 +42,7 @@ export default function ManualIdeaPage() {
         Generate AI Question <HugeiconsIcon icon={ArrowRight02Icon} size={20} />
       </button>
 
+      {genError && <p className="mt-3 text-center text-[14px] text-[#DC2626]">{genError}</p>}
       <BuildingSurveyModal open={generating} />
     </div>
   );
