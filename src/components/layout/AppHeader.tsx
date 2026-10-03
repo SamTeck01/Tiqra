@@ -1,7 +1,8 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Notification01Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { ArrowDataTransferHorizontalIcon, Notification01Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import Link from "next/link";
 import { useAuthStore } from "@/store/auth.store";
 import { getInitials } from "@/lib/utils";
 
@@ -23,6 +24,13 @@ export default function AppHeader() {
       </label>
 
       <div className="flex flex-shrink-0 items-center gap-4">
+        <Link
+          href={user?.role === "founder" ? "/earner/dashboard" : "/founder/dashboard"}
+          className="hidden items-center gap-2 rounded-full bg-white px-4 py-2 text-[13px] text-[#4F46E5] hover:bg-[#EEF2FF] md:inline-flex"
+        >
+          <HugeiconsIcon icon={ArrowDataTransferHorizontalIcon} size={16} />
+          Switch to {user?.role === "founder" ? "Earner" : "Founder"}
+        </Link>
         <button
           aria-label="Notifications"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#111827] hover:bg-[#EEF2FF]"

@@ -13,7 +13,7 @@ export default function AuthGuard({
   allowedRole: UserRole;
 }) {
   const router = useRouter();
-  const { isAuthenticated, user, isHydrated } = useAuthStore();
+  const { isAuthenticated, user, isHydrated, switchRole } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -23,16 +23,17 @@ export default function AuthGuard({
     if (!isAuthenticated || !user) {
       router.replace("/auth/login");
     } else if (user.role !== allowedRole) {
-      router.replace(`/${user.role}/dashboard`);
+      // One account, two workspaces: opening the other dashboard switches to it.
+      switchRole(allowedRole).catch(() => router.replace(`/${user.role}/dashboard`));
     } else {
       setIsReady(true);
     }
-  }, [isAuthenticated, user, isHydrated, allowedRole, router]);
+  }, [isAuthenticated, user, isHydrated, allowedRole, router, switchRole]);
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-neutral-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#FEFEFE] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#4F46E5] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }

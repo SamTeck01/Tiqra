@@ -30,7 +30,7 @@ interface AuthState {
   getUser: () => Promise<void>;
   clearError: () => void;
   switchRole: (role: UserRole) => Promise<void>;
-  updateProfile: (data: { name?: string; demographics?: UserDemographics }) => Promise<void>;
+  updateProfile: (data: { name?: string; demographics?: UserDemographics; notificationPrefs?: Record<string, boolean> }) => Promise<void>;
   changePassword: (current: string, next: string) => Promise<void>;
   /** Returns the recovery token when the backend hands it back directly (mock mode). */
   requestPasswordReset: (email: string) => Promise<{ userId: string; secret: string } | null>;

@@ -35,13 +35,13 @@ const SLIDES = [
 function FounderIllustration() {
   return (
     <svg width="280" height="260" viewBox="0 0 280 260" fill="none" className="mx-auto">
-      <circle cx="140" cy="130" r="100" fill="#EDE9FE" />
+      <circle cx="140" cy="130" r="100" fill="#E0E7FF" />
       <rect x="80" y="80" width="120" height="100" rx="16" fill="white" />
-      <rect x="95" y="100" width="80" height="10" rx="4" fill="#EDE9FE" />
+      <rect x="95" y="100" width="80" height="10" rx="4" fill="#E0E7FF" />
       <rect x="95" y="118" width="60" height="8" rx="4" fill="#F3F4F6" />
       <rect x="95" y="134" width="70" height="8" rx="4" fill="#F3F4F6" />
-      <rect x="95" y="152" width="50" height="14" rx="6" fill="#9F4EF5" />
-      <circle cx="195" cy="85" r="18" fill="#9F4EF5" />
+      <rect x="95" y="152" width="50" height="14" rx="6" fill="#4F46E5" />
+      <circle cx="195" cy="85" r="18" fill="#4F46E5" />
       <path d="M187 85l5 5 9-9" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
@@ -54,8 +54,8 @@ function EarnerIllustration() {
       <rect x="75" y="75" width="130" height="110" rx="16" fill="white" />
       {[0, 1, 2, 3].map((i) => (
         <g key={i}>
-          <rect x="90" y={95 + i * 22} width="12" height="12" rx="3" fill={i < 2 ? "#9F4EF5" : "#E5E7EB"} />
-          <rect x="110" y={97 + i * 22} width="70" height="8" rx="3" fill={i < 2 ? "#EDE9FE" : "#F3F4F6"} />
+          <rect x="90" y={95 + i * 22} width="12" height="12" rx="3" fill={i < 2 ? "#4F46E5" : "#E5E7EB"} />
+          <rect x="110" y={97 + i * 22} width="70" height="8" rx="3" fill={i < 2 ? "#E0E7FF" : "#F3F4F6"} />
         </g>
       ))}
       <rect x="90" y="163" width="100" height="14" rx="6" fill="#16A34A" />
@@ -71,13 +71,13 @@ function AIIllustration() {
     <svg width="280" height="260" viewBox="0 0 280 260" fill="none" className="mx-auto">
       <circle cx="140" cy="130" r="100" fill="#FEF3C7" />
       <rect x="80" y="90" width="120" height="80" rx="16" fill="white" />
-      <rect x="95" y="108" width="90" height="10" rx="4" fill="#EDE9FE" />
+      <rect x="95" y="108" width="90" height="10" rx="4" fill="#E0E7FF" />
       <rect x="95" y="125" width="70" height="8" rx="4" fill="#F3F4F6" />
       <rect x="95" y="140" width="80" height="8" rx="4" fill="#F3F4F6" />
-      <circle cx="200" cy="90" r="28" fill="#9F4EF5" />
+      <circle cx="200" cy="90" r="28" fill="#4F46E5" />
       <path d="M190 90h6M196 90l-4-4M196 90l-4 4" stroke="white" strokeWidth="2" strokeLinecap="round" />
       <circle cx="205" cy="83" r="3" fill="white" />
-      <text x="84" y="195" fill="#9F4EF5" fontSize="12" fontWeight="600">GO</text>
+      <text x="84" y="195" fill="#4F46E5" fontSize="12" fontWeight="600">GO</text>
       <text x="120" y="195" fill="#D97706" fontSize="12" fontWeight="600">PIVOT</text>
       <text x="170" y="195" fill="#DC2626" fontSize="12" fontWeight="600">KILL</text>
     </svg>
@@ -119,7 +119,7 @@ export default function OnboardingPage() {
           {current.id === 3 && <AIIllustration />}
 
           <div className="flex flex-col items-center gap-4 text-center">
-            <span className="text-sm bg-[#EDE9FE] text-brand-primary px-4 py-1.5 rounded-full font-medium">
+            <span className="text-sm bg-[#E0E7FF] text-brand-primary px-4 py-1.5 rounded-full font-medium">
               {current.badge}
             </span>
             <h1 className="text-[32px] font-bold text-text-primary leading-tight whitespace-pre-line">

@@ -13,6 +13,37 @@ interface EarnerState {
   submitResponse: (userId: string, survey: Survey, answers: Answer[], timeTaken: number) => Promise<void>;
 }
 
+async function walletOf(userId: string): Promise<Wallet | undefined> {
+  const res = await databases.listDocuments(DB_ID, COLLECTIONS.WALLETS, [Query.equal("userId", userId)]);
+  return res.documents[0] as unknown as Wallet | undefined;
+}
+
+/** When a survey fills, every validated response is approved: pending rewards move to each respondent's balance. */
+async function releasePayouts(survey: Survey) {
+  const res = await databases.listDocuments(DB_ID, COLLECTIONS.RESPONSES, [Query.equal("surveyId", survey.$id)]);
+  for (const r of res.documents as unknown as Response[]) {
+    if (!r.validatedByTruthLayer) continue;
+    const wallet = await walletOf(r.respondentId);
+    if (!wallet) continue;
+    const amount = survey.payoutPerResponse;
+    const balance = wallet.balance + amount;
+    await databases.updateDocument(DB_ID, COLLECTIONS.WALLETS, wallet.$id, {
+      balance,
+      pendingBalance: Math.max(0, wallet.pendingBalance - amount),
+      totalEarned: wallet.totalEarned + amount,
+    });
+    await databases.createDocument(DB_ID, COLLECTIONS.TRANSACTIONS, ID.unique(), {
+      userId: r.respondentId,
+      type: "credit",
+      amount,
+      description: `Reward: ${survey.title}`,
+      status: "completed",
+      balanceAfter: balance,
+      createdAt: new Date().toISOString(),
+    });
+  }
+}
+
 export const useEarnerStore = create<EarnerState>((set, get) => ({
   available: [],
   responses: [],
@@ -51,16 +82,19 @@ export const useEarnerStore = create<EarnerState>((set, get) => ({
       completedAt: new Date().toISOString(),
       timeTaken,
     });
+    const completed = survey.respondentsCompleted + 1;
+    const finished = completed >= survey.respondentsRequired;
     await databases.updateDocument(DB_ID, COLLECTIONS.SURVEYS, survey.$id, {
-      respondentsCompleted: survey.respondentsCompleted + 1,
+      respondentsCompleted: completed,
+      ...(finished ? { status: "completed", aiReportGenerated: true } : {}),
     });
-    const wallets = await databases.listDocuments(DB_ID, COLLECTIONS.WALLETS, [Query.equal("userId", userId)]);
-    const wallet = wallets.documents[0] as unknown as Wallet | undefined;
+    const wallet = await walletOf(userId);
     if (wallet) {
       await databases.updateDocument(DB_ID, COLLECTIONS.WALLETS, wallet.$id, {
         pendingBalance: wallet.pendingBalance + survey.payoutPerResponse,
       });
     }
+    if (finished) await releasePayouts(survey);
     set({ available: get().available.filter((s) => s.$id !== survey.$id) });
     await get().fetchResponses(userId);
   },

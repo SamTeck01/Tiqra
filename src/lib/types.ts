@@ -35,6 +35,7 @@ export interface User {
   walletBalance: number;
   reliabilityScore: number;
   demographics?: UserDemographics;
+  notificationPrefs?: Record<string, boolean>;
   createdAt: string;
 }
 

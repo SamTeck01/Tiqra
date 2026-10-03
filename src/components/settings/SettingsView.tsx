@@ -125,11 +125,16 @@ function SecurityPanel() {
 }
 
 export default function SettingsView({ role }: { role: Role }) {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateProfile } = useAuthStore();
   const [open, setOpen] = useState<Section | null>(null);
   const [notifs, setNotifs] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(NOTIFICATIONS[role].map((n) => [n.id, true]))
+    Object.fromEntries(NOTIFICATIONS[role].map((n) => [n.id, user?.notificationPrefs?.[n.id] ?? true]))
   );
+  const setNotif = (id: string, v: boolean) => {
+    const next = { ...notifs, [id]: v };
+    setNotifs(next);
+    updateProfile({ notificationPrefs: { ...user?.notificationPrefs, ...next } });
+  };
 
   const name = user?.name ?? "";
   const complete = role === "founder" || user?.demographics ? 100 : 33;
@@ -172,7 +177,7 @@ export default function SettingsView({ role }: { role: Role }) {
       body: (
         <div>
           {NOTIFICATIONS[role].map((n) => (
-            <Toggle key={n.id} label={n.label} on={notifs[n.id]} onChange={(v) => setNotifs({ ...notifs, [n.id]: v })} />
+            <Toggle key={n.id} label={n.label} on={notifs[n.id]} onChange={(v) => setNotif(n.id, v)} />
           ))}
         </div>
       ),

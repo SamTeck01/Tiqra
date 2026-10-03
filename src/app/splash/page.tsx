@@ -17,7 +17,7 @@ export default function SplashPage() {
     <div
       className="min-h-screen flex flex-col items-center justify-center"
       style={{
-        background: "linear-gradient(136deg, #9F4EF5 0%, #C084FC 50%, #E5CAFC 100%)",
+        background: "linear-gradient(136deg, #4F46E5 0%, #C084FC 50%, #E5CAFC 100%)",
       }}
     >
       {/* Logo mark */}
