@@ -1,4 +1,4 @@
-/* Geist font is loaded via the 'geist' package in layout.tsx (next/font — no network request) */
+/* Manrope is loaded via next/font/google in layout.tsx */
 
 @tailwind base;
 @tailwind components;
@@ -6,14 +6,14 @@
 
 @layer base {
   :root {
-    --brand-primary: #9F4EF5;
-    --brand-bg: #EDE9FE;
+    --brand-primary: #4F46E5;
+    --brand-bg: #E0E7FF;
     --bg-primary: #FEFEFE;
     --bg-secondary: #F8F9FC;
     --text-primary: #111827;
     --text-secondary: #6B7280;
     --border: #E5E7EB;
-    --sidebar-width: 324px;
+    --sidebar-width: 250px;
   }
 
   * {
@@ -26,7 +26,7 @@
 
   body {
     @apply bg-[#FEFEFE] text-[#111827] font-sans;
-    font-family: var(--font-geist-sans), 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-manrope), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {

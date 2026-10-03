@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import AuthProvider from "@/components/auth/AuthProvider";
+
+const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Tiqra – Truth-First Market Intelligence",
@@ -28,8 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={GeistSans.variable}>
-      <body className={`antialiased ${GeistSans.className}`}>
+    <html lang="en" className={manrope.variable}>
+      <body className={`antialiased ${manrope.className}`}>
         <AuthProvider>
           {children}
           <MobileBottomNav />

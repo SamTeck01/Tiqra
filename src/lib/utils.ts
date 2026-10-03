@@ -17,17 +17,6 @@ export function formatNairaShort(amount: number): string {
   return `₦${amount.toLocaleString("en-NG")}`;
 }
 
-export function calculateSurveyCost(
-  respondents: number,
-  payoutPerResponse: number,
-  platformFeePercent: number = 0.15
-): { respondentPayout: number; platformFee: number; total: number } {
-  const respondentPayout = respondents * payoutPerResponse;
-  const platformFee = respondentPayout * platformFeePercent;
-  const total = respondentPayout + platformFee;
-  return { respondentPayout, platformFee, total };
-}
-
 export function getInitials(name: string): string {
   return name
     .split(" ")
@@ -39,4 +28,16 @@ export function getInitials(name: string): string {
 
 export function truncate(str: string, length: number): string {
   return str.length > length ? str.slice(0, length) + "..." : str;
+}
+
+/** "April 8 2026 . 10:30 AM" — the timestamp format used across the Figma lists. */
+export function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }).replace(",", "");
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${date} . ${time}`;
+}
+
+export function formatNairaFull(amount: number): string {
+  return `₦${amount.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

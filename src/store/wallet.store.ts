@@ -14,6 +14,8 @@ interface WalletState {
   initiateDeposit: (userId: string, amount: number, email: string) => Promise<string>;
   verifyPaystackPayment: (reference: string, userId: string, amount: number) => Promise<void>;
   requestWithdrawal: (userId: string, amount: number, accountDetails: object) => Promise<void>;
+  /** Move survey funds from the wallet into escrow. */
+  payForSurvey: (userId: string, amount: number, surveyTitle: string) => Promise<void>;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -87,5 +89,27 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       status: "pending",
       createdAt: new Date().toISOString(),
     });
+  },
+
+  payForSurvey: async (userId, amount, surveyTitle) => {
+    const res = await databases.listDocuments(DB_ID, COLLECTIONS.WALLETS, [Query.equal("userId", userId)]);
+    const wallet = res.documents[0] as unknown as Wallet | undefined;
+    if (!wallet) throw new Error("Wallet not found");
+    if (wallet.balance < amount) throw new Error("Insufficient wallet balance");
+    const balance = wallet.balance - amount;
+    await databases.updateDocument(DB_ID, COLLECTIONS.WALLETS, wallet.$id, {
+      balance,
+      totalSpent: (wallet.totalSpent ?? 0) + amount,
+    });
+    await databases.createDocument(DB_ID, COLLECTIONS.TRANSACTIONS, ID.unique(), {
+      userId,
+      type: "escrow",
+      amount,
+      description: surveyTitle,
+      status: "completed",
+      balanceAfter: balance,
+      createdAt: new Date().toISOString(),
+    });
+    await get().fetchWallet(userId);
   },
 }));

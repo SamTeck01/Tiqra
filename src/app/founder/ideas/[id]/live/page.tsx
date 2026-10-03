@@ -1,173 +1,136 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { databases } from "@/lib/appwrite";
-import { DB_ID, COLLECTIONS } from "@/lib/appwrite.config";
-import { Idea } from "@/lib/types";
+import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon, ChartBarLineIcon, Location01Icon, UserGroupIcon, Time01Icon, FlashIcon, Wallet01Icon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
-import TopBar from "@/components/layout/TopBar";
+import { Activity01Icon, Comment01Icon, SparklesIcon } from "@hugeicons/core-free-icons";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { useSurvey } from "@/components/founder/useSurvey";
+import { BackLink, Bar, Ring } from "@/components/ui/Primitives";
+import { getLiveStats, levelOf } from "@/lib/reports";
+
+const sentimentColor = (score: number) => (score >= 70 ? "#4F46E5" : score >= 50 ? "#F59E0B" : "#DC2626");
+const scorePill = (score: number) =>
+  score >= 85 ? { color: "#16A34A", bg: "#DCFCE7" } : { color: "#F59E0B", bg: "#FEF3C7" };
 
 export default function LiveTrackPage() {
-  const { id } = useParams() as { id: string };
-  const router = useRouter();
-  const [idea, setIdea] = useState<Idea | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = useParams<{ id: string }>();
+  const { survey } = useSurvey(id);
+  const stats = getLiveStats();
 
-  // Mock real-time progression
-  const [responses, setResponses] = useState(0);
+  if (!survey) return <div className="skeleton mt-14 h-[600px]" />;
 
-  useEffect(() => {
-    async function fetchIdea() {
-      try {
-        const doc = await databases.getDocument(DB_ID, COLLECTIONS.SURVEYS, id);
-        const fetchedIdea = doc as unknown as Idea;
-        setIdea(fetchedIdea);
-        setResponses(fetchedIdea.respondentsCompleted);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchIdea();
-  }, [id]);
-
-  useEffect(() => {
-    // Simulate real-time responses coming in if the idea is live
-    if (idea && idea.status === "live") {
-      const interval = setInterval(() => {
-        setResponses((prev) => {
-          if (prev >= idea.respondentsRequired) {
-            clearInterval(interval);
-            return idea.respondentsRequired;
-          }
-          // Randomly add 1 or 2 responses every few seconds
-          return prev + Math.floor(Math.random() * 3);
-        });
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [idea]);
-
-  if (loading || !idea) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <TopBar title="Live Tracking..." subtitle="" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-[#10B981] border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </div>
-    );
-  }
-
-  const progressPct = Math.min(100, (responses / idea.respondentsRequired) * 100);
+  const pct = survey.respondentsRequired ? Math.round((survey.respondentsCompleted / survey.respondentsRequired) * 100) : 0;
+  const started = new Date(survey.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const level = levelOf(stats.confidence);
 
   return (
-    <div className="flex flex-col min-h-screen pb-24 lg:pb-8">
-      {/* Dynamic TopBar */}
-      <div className="flex items-center gap-4 py-4 px-4 lg:px-8 border-b border-[#F3F4F6] bg-white sticky top-0 z-10">
-        <button onClick={() => router.push(`/founder/ideas/${id}`)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8F9FC] text-text-secondary hover:text-text-primary transition-colors">
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
-        </button>
-        <div>
-          <h1 className="text-[20px] font-semibold text-text-primary">Live Track: {idea.title}</h1>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="flex items-center justify-center w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
-            <p className="text-xs text-[#10B981] font-medium uppercase tracking-wider">Collecting Responses</p>
-          </div>
+    <div className="flex flex-col pt-10">
+      <BackLink href="/founder/ideas" />
+
+      <div className="mt-10 flex items-center gap-4">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4F46E5] px-4 py-1 text-[12px] text-[#4F46E5]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> Live
+        </span>
+        <span className="text-[14px] text-[#6B7280]">Updates every few minutes</span>
+      </div>
+      <h1 className="mt-3 text-[20px] tracking-[-0.02em] text-[#111827]">{survey.title}</h1>
+      <p className="text-[14px] text-[#6B7280]">Real-time validation in progress . Started {started}</p>
+
+      <div className="mt-6 flex items-center justify-between text-[14px]">
+        <span className="text-[#6B7280]">Validation in progress</span>
+        <span className="text-[#4F46E5]">{pct}% complete</span>
+      </div>
+      <Bar value={pct} className="mt-2 h-3" />
+
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col items-center rounded-[24px] border border-[#E5E7EB] p-6">
+          <p className="text-[14px] uppercase text-[#6B7280]">Confidence score</p>
+          <Ring value={stats.confidence} size={170} stroke={14} color="#4F46E5" track="#EEF2FF">
+            <p className="text-[28px] font-semibold text-[#111827]">{stats.confidence}%</p>
+            <p className="text-[14px]" style={{ color: level === "High" ? "#16A34A" : "#F59E0B" }}>{level}</p>
+          </Ring>
+          <p className="mt-3 text-[12px] text-[#6B7280]">Score updates as more responses are collected</p>
         </div>
-        <div className="ml-auto">
-          <button className="btn-secondary py-2 px-4 text-sm text-[#DC2626] border-[#FEE2E2] hover:bg-[#FEE2E2] hover:text-[#DC2626]">
-            Pause Survey
-          </button>
+        <div className="h-[260px] rounded-[24px] border border-[#E5E7EB] p-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={stats.timeline} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+              <CartesianGrid stroke="#F3F4F6" />
+              <XAxis dataKey="hour" type="number" domain={[0, 72]} ticks={[0, 12, 24, 36, 48, 60, 72]} tick={{ fontSize: 10, fill: "#6B7280" }} />
+              <YAxis domain={[0, Math.max(50, survey.respondentsRequired)]} tick={{ fontSize: 10, fill: "#6B7280" }} />
+              <Line dataKey="responses" stroke="#4F46E5" strokeWidth={1.5} dot={{ r: 3, fill: "white" }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="page-content mt-6 flex flex-col gap-6 max-w-5xl">
-        {/* Top Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-text-secondary mb-2">
-              <HugeiconsIcon icon={UserGroupIcon} size={18} />
-              <span className="text-sm font-medium">Responses</span>
-            </div>
-            <p className="text-3xl font-bold text-text-primary">{responses}</p>
-            <p className="text-xs text-text-muted mt-1">Target: {idea.respondentsRequired}</p>
-          </div>
-          
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-text-secondary mb-2">
-              <HugeiconsIcon icon={Time01Icon} size={18} />
-              <span className="text-sm font-medium">Avg. Time</span>
-            </div>
-            <p className="text-3xl font-bold text-text-primary">2m 14s</p>
-            <p className="text-xs text-[#10B981] mt-1 font-medium">-12s vs average</p>
-          </div>
-
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-text-secondary mb-2">
-              <HugeiconsIcon icon={Location01Icon} size={18} />
-              <span className="text-sm font-medium">Top Location</span>
-            </div>
-            <p className="text-3xl font-bold text-text-primary truncate">Lagos</p>
-            <p className="text-xs text-text-muted mt-1">45% of total responses</p>
-          </div>
-
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-text-secondary mb-2">
-              <HugeiconsIcon icon={Wallet01Icon} size={18} />
-              <span className="text-sm font-medium">Est. Cost</span>
-            </div>
-            <p className="text-3xl font-bold text-text-primary">₦{responses * 100}</p>
-            <p className="text-xs text-text-muted mt-1">At ₦100 per response</p>
-          </div>
-        </div>
-
-        {/* Progress Bar Container */}
-        <div className="bg-white border border-[#F3F4F6] p-6 lg:p-8 rounded-2xl flex flex-col gap-4">
-          <div className="flex justify-between items-end">
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#E0E7FF] p-4">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#4F46E5]">
+              <HugeiconsIcon icon={SparklesIcon} size={20} className="text-white" />
+            </span>
             <div>
-              <h3 className="text-lg font-semibold text-text-primary">Overall Progress</h3>
-              <p className="text-sm text-text-secondary">Watch your audience validate your idea in real-time.</p>
+              <p className="text-[18px] tracking-[-0.02em] text-[#111827]">AI insights</p>
+              <p className="text-[14px] text-[#111827]">{stats.insight}</p>
             </div>
-            <span className="text-xl font-bold text-[#10B981]">{Math.floor(progressPct)}%</span>
           </div>
-          <div className="h-4 bg-[#F3F4F6] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#10B981] transition-all duration-1000 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
+          <div className="rounded-2xl p-6 shadow-[0_4px_24px_rgba(17,24,39,0.06)]">
+            <p className="text-[16px] text-[#111827]">Session Stats</p>
+            {stats.session.map((row) => (
+              <div key={row.label} className="mt-5 flex items-center justify-between">
+                <span className="max-w-[120px] text-[13px] text-[#6B7280]">{row.label}</span>
+                <span className="text-[16px] text-[#111827]">{row.value}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Mock Charts Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-[#F3F4F6] p-6 rounded-2xl h-[300px] flex flex-col">
-            <h3 className="text-body font-semibold text-text-primary mb-4">Responses Over Time</h3>
-            <div className="flex-1 border-b border-l border-[#E5E7EB] relative mt-4 ml-4 mb-6">
-              {/* Fake Line Chart */}
-              <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-                <path d="M0,100 L20,80 L40,85 L60,40 L80,20 L100,5" fill="none" stroke="#10B981" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-              </svg>
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#F3F4F6] p-6 rounded-2xl h-[300px] flex flex-col">
-            <h3 className="text-body font-semibold text-text-primary mb-4">Sentiment Analysis</h3>
-            <div className="flex-1 flex items-center justify-center">
-              {/* Fake Doughnut Chart */}
-              <div className="relative w-40 h-40 rounded-full border-[16px] border-[#10B981] border-r-[#F59E0B] border-b-[#EF4444] transform rotate-45 flex items-center justify-center shadow-inner">
-                <div className="absolute inset-0 bg-white rounded-full m-4 flex flex-col items-center justify-center -rotate-45">
-                   <HugeiconsIcon icon={FlashIcon} size={24} className="text-[#10B981] mb-1" />
-                   <span className="text-sm font-bold">Positive</span>
+        <div className="rounded-2xl p-4 shadow-[0_4px_24px_rgba(17,24,39,0.06)]">
+          <p className="flex items-center gap-2 text-[16px] text-[#111827]">
+            <HugeiconsIcon icon={Comment01Icon} size={20} className="text-[#4F46E5]" /> Question sentiments
+          </p>
+          <div className="mt-4 flex flex-col gap-3">
+            {stats.sentiments.map((q, i) => (
+              <div key={q.question} className="flex gap-2">
+                <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded bg-[#E0E7FF] text-[10px] text-[#4F46E5]">{i + 1}</span>
+                <div className="flex-1">
+                  <div className="flex justify-between gap-2 text-[13px]">
+                    <span className="text-[#111827]">{q.question}</span>
+                    <span style={{ color: q.score >= 70 ? "#16A34A" : q.score >= 50 ? "#F59E0B" : "#DC2626" }}>{q.score}%</span>
+                  </div>
+                  <Bar value={q.score} color={sentimentColor(q.score)} track="#EEF2FF" className="mt-1 h-1.5" />
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-[24px] border border-[#E5E7EB] p-4">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-4">
+          <p className="flex items-center gap-2 text-[20px] tracking-[-0.02em] text-[#111827]">
+            <HugeiconsIcon icon={Activity01Icon} size={22} className="text-[#4F46E5]" /> Recent Activity
+          </p>
+          <span className="flex items-center gap-2 text-[14px] text-[#4F46E5]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" /> Waiting for responses
+          </span>
+        </div>
+        {stats.activity.map((a) => {
+          const pill = scorePill(a.score);
+          return (
+            <div key={a.initials} className="flex items-center gap-3 border-b border-[#F3F4F6] py-4 last:border-0">
+              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#4F46E5] text-[18px] text-white">{a.initials}</span>
+              <div className="flex-1">
+                <p className="text-[16px] text-[#111827]">Verified respondent</p>
+                <p className="text-[12px] text-[#6B7280]">Completed all {survey.questions.length || 11} questions</p>
+              </div>
+              <div className="text-right">
+                <span className="rounded-full px-3 py-1 text-[14px]" style={{ color: pill.color, background: pill.bg }}>{a.score}%</span>
+                <p className="mt-1 text-[12px] text-[#6B7280]">{a.ago}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

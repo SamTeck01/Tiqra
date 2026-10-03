@@ -11,16 +11,16 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Geist", "var(--font-geist-sans)", ...fontFamily.sans],
+        sans: ["var(--font-manrope)", ...fontFamily.sans],
         mono: ["Geist Mono", "var(--font-geist-mono)", ...fontFamily.mono],
       },
       colors: {
         // Tiqra Brand Colors (from Figma)
         brand: {
-          primary: "#9F4EF5",
-          background: "#EDE9FE",
-          secondary: "#7C3AED",
-          soft: "#F3EFFE",
+          primary: "#4F46E5",
+          background: "#E0E7FF",
+          secondary: "#4338CA",
+          soft: "#EEF2FF",
         },
         // Background
         bg: {
@@ -49,7 +49,7 @@ const config: Config = {
         },
         // Buttons
         btn: {
-          primary: "#9F4EF5",
+          primary: "#4F46E5",
           "primary-text": "#FFFFFF",
           "secondary-bg": "#FFFFFF",
           "secondary-border": "#E5E7EB",
@@ -76,7 +76,7 @@ const config: Config = {
         sidebar: "4px 4px 32px 0px rgba(0, 0, 0, 0.16)",
         card: "0px 1px 3px 0px rgba(0, 0, 0, 0.08)",
         "card-hover": "0px 4px 16px 0px rgba(0, 0, 0, 0.12)",
-        glow: "4px 4px 32px 0px rgba(159, 78, 245, 0.2)",
+        glow: "4px 4px 32px 0px rgba(79, 70, 229, 0.2)",
       },
       fontSize: {
         // Figma type scale

@@ -51,16 +51,15 @@ export const mockDatabases = {
     else if (collectionId === COLLECTIONS.RESPONSES) data = runtimeData.responses;
     else if (collectionId === COLLECTIONS.IDEAS) data = runtimeData.ideas;
 
-    // Apply very basic mock querying
+    // Apply the equal() filters. Appwrite v16 serialises queries as JSON.
     for (const q of queries) {
-      if (typeof q === "string" && q.startsWith("equal(")) {
-        // extract key and value: equal("email", ["founder@tiqra.com"]) or equal("email", "founder@tiqra.com")
-        const match = q.match(/equal\("([^"]+)", \[?"([^"]+)"\]?\)/);
-        if (match) {
-          const key = match[1];
-          const val = match[2];
-          data = data.filter((item) => item[key] === val);
+      try {
+        const parsed = JSON.parse(q) as { method: string; attribute: string; values: unknown[] };
+        if (parsed.method === "equal") {
+          data = data.filter((item) => parsed.values.includes(item[parsed.attribute]));
         }
+      } catch {
+        // Not a JSON query; ignore.
       }
     }
 

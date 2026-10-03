@@ -3,10 +3,10 @@ import { User, Survey, Transaction, Wallet, Response, Idea } from "./types";
 export const MOCK_USERS: User[] = [
   {
     $id: "user_founder_001",
-    name: "Alex Founder",
+    name: "Haleemah Abdulazeez",
     email: "founder@tiqra.com",
     role: "founder",
-    walletBalance: 15000,
+    walletBalance: 25000,
     reliabilityScore: 100,
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -25,10 +25,10 @@ export const MOCK_WALLETS: Wallet[] = [
   {
     $id: "wallet_founder_001",
     userId: "user_founder_001",
-    balance: 15000,
-    pendingBalance: 5000,
+    balance: 25000,
+    pendingBalance: 0,
     totalEarned: 0,
-    totalSpent: 45000,
+    totalSpent: 120000,
   },
   {
     $id: "wallet_earner_001",
@@ -40,26 +40,14 @@ export const MOCK_WALLETS: Wallet[] = [
   },
 ];
 
+const at = (iso: string) => new Date(iso).toISOString();
+
 export const MOCK_TRANSACTIONS: Transaction[] = [
-  {
-    $id: "tx_001",
-    userId: "user_founder_001",
-    type: "credit",
-    amount: 20000,
-    description: "Wallet Funding via Paystack",
-    status: "completed",
-    reference: "tiqra_mock_ref_1",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    $id: "tx_002",
-    userId: "user_founder_001",
-    type: "escrow",
-    amount: 5000,
-    description: "Escrow for 'Fintech App Validation' survey",
-    status: "completed",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
+  { $id: "tx_f1", userId: "user_founder_001", type: "credit", amount: 50000, description: "Added funds to wallet via Paystack", status: "completed", reference: "tiqra_mock_ref_5", balanceAfter: 25000, createdAt: at("2026-04-08T10:30:00") },
+  { $id: "tx_f2", userId: "user_founder_001", type: "escrow", amount: 25000, description: "AI resume builder", status: "completed", balanceAfter: 0, createdAt: at("2026-04-06T11:30:00") },
+  { $id: "tx_f3", userId: "user_founder_001", type: "escrow", amount: 50000, description: "Campus Swap", status: "completed", balanceAfter: 25000, createdAt: at("2026-04-04T11:30:00") },
+  { $id: "tx_f4", userId: "user_founder_001", type: "credit", amount: 100000, description: "Added funds to wallet via Paystack", status: "completed", reference: "tiqra_mock_ref_4", balanceAfter: 75000, createdAt: at("2026-04-02T10:30:00") },
+  { $id: "tx_f5", userId: "user_founder_001", type: "escrow", amount: 25000, description: "StudyBuddy", status: "completed", balanceAfter: 0, createdAt: at("2026-03-24T11:30:00") },
   {
     $id: "tx_003",
     userId: "user_earner_001",
@@ -80,63 +68,50 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
   },
 ];
 
-export const MOCK_SURVEYS: Survey[] = [
-  {
-    $id: "survey_001",
-    title: "Fintech App Validation in Nigeria",
-    description: "We are validating a new cross-border payment application.",
+const NG = { country: "Nigeria", ageRange: { min: 18, max: 45 } };
+
+function seedSurvey(
+  id: string,
+  title: string,
+  summary: string,
+  status: Survey["status"],
+  required: number,
+  completed: number,
+  extra: Partial<Survey> = {}
+): Survey {
+  const questions = 11;
+  const payoutPerResponse = questions * 30;
+  const payout = payoutPerResponse * required;
+  return {
+    $id: id,
+    title,
+    description: summary,
+    summary,
     creatorId: "user_founder_001",
-    status: "live",
-    questions: [
-      {
-        id: "q_1",
-        text: "How often do you send money across borders?",
-        type: "multiple_choice",
-        options: ["Weekly", "Monthly", "Rarely", "Never"],
-        required: true,
-        order: 1,
-      },
-      {
-        id: "q_2",
-        text: "What is your biggest frustration with current solutions?",
-        type: "short_text",
-        required: true,
-        order: 2,
-      },
-    ],
-    targetAudience: {
-      country: "Nigeria",
-      ageRange: { min: 18, max: 45 },
-    },
-    respondentsRequired: 100,
-    respondentsCompleted: 42,
-    payoutPerResponse: 200,
-    platformFee: 1000,
-    totalCost: 21000,
-    escrowAmount: 21000,
-    aiReportGenerated: false,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    $id: "survey_002",
-    title: "E-commerce Shopping Habits",
-    description: "Understanding how millennials shop online.",
-    creatorId: "user_founder_001",
-    status: "completed",
+    status,
     questions: [],
-    targetAudience: {
-      country: "Global",
-      ageRange: { min: 18, max: 35 },
-    },
-    respondentsRequired: 50,
-    respondentsCompleted: 50,
-    payoutPerResponse: 300,
-    platformFee: 1500,
-    totalCost: 16500,
-    escrowAmount: 16500,
-    aiReportGenerated: true,
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-  },
+    targetAudience: NG,
+    respondentsRequired: required,
+    respondentsCompleted: completed,
+    payoutPerResponse,
+    platformFee: Math.round(payout * 0.15),
+    totalCost: Math.round(payout * 1.15),
+    escrowAmount: Math.round(payout * 1.15),
+    aiReportGenerated: status === "completed",
+    createdAt: at("2026-04-26T09:00:00"),
+    ...extra,
+  };
+}
+
+export const MOCK_SURVEYS: Survey[] = [
+  seedSurvey("survey_resume", "AI powered Resume builder", "Helping job seekers pass ATS filters", "live", 50, 32),
+  seedSurvey("survey_invoice", "Freelancer Invoice Tools", "Invoicing and reminders for freelancers", "live", 50, 20),
+  seedSurvey("survey_meal", "Student Meal Planner App", "Affordable meals near campus", "live", 50, 47),
+  seedSurvey("survey_standup", "Remote Team Standup Bot", "Async standups for remote teams", "live", 50, 18),
+  seedSurvey("survey_artisan", "Local artisan marketplace", "Connecting local artisans to urban buyers", "completed", 80, 80, { verdict: "go", confidence: 84, createdAt: at("2026-04-12T09:00:00") }),
+  seedSurvey("survey_tutoring", "On-demand tutoring for SS3", "Exam prep tutors on demand for SS3 students", "completed", 60, 60, { verdict: "pivot", confidence: 41, createdAt: at("2026-04-04T09:00:00") }),
+  seedSurvey("survey_crypto", "Crypto rewards for gamers", "Paying gamers in crypto for achievements", "completed", 50, 50, { verdict: "kill", confidence: 21, createdAt: at("2026-03-20T09:00:00") }),
+  seedSurvey("survey_diabetes", "Meal plan generator for diabetes", "Generic meal plans don't account for medical needs", "draft", 50, 0),
 ];
 
 export const MOCK_RESPONSES: Response[] = [

@@ -1,192 +1,149 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { databases } from "@/lib/appwrite";
-import { DB_ID, COLLECTIONS } from "@/lib/appwrite.config";
-import { Idea } from "@/lib/types";
+import { useParams } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowLeft01Icon, Rocket01Icon, Alert01Icon, Cancel01Icon, CheckmarkCircle01Icon, ChartBarLineIcon, DollarCircleIcon, Target01Icon, Briefcase02Icon, DocumentAttachmentIcon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
-import TopBar from "@/components/layout/TopBar";
+import { ChartIncreaseIcon, Money03Icon, QuoteDownIcon, Target02Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { Bar as RBar, BarChart, Cell, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { useSurvey } from "@/components/founder/useSurvey";
+import ReportHeader from "@/components/founder/ReportHeader";
+import { Bar } from "@/components/ui/Primitives";
+import { Dimension, TaggedLine, getValidationReport } from "@/lib/reports";
+import { STRENGTH_COLOR, VERDICTS, strengthOf } from "@/lib/verdict";
+import { getInitials } from "@/lib/utils";
 
-type Verdict = "GO" | "PIVOT" | "KILL";
+const DIM_ICON: Record<Dimension["key"], typeof Target02Icon> = {
+  problem: Target02Icon,
+  behaviour: UserGroupIcon,
+  willingness: Money03Icon,
+  repeat: ChartIncreaseIcon,
+};
+const SHORT: Record<Dimension["key"], string> = { problem: "Problem", behaviour: "Behaviour", willingness: "Willingness", repeat: "Repeat" };
 
-export default function ReportPage() {
-  const { id } = useParams() as { id: string };
-  const router = useRouter();
-  const [idea, setIdea] = useState<Idea | null>(null);
-  const [loading, setLoading] = useState(true);
+/** Colour a value by the verdict band it falls in, matching the Figma report variants. */
+function bandColor(score: number) {
+  return score >= 65 ? "#16A34A" : score >= 45 ? "#F59E0B" : "#DC2626";
+}
 
-  useEffect(() => {
-    async function fetchIdea() {
-      try {
-        const doc = await databases.getDocument(DB_ID, COLLECTIONS.SURVEYS, id);
-        setIdea(doc as unknown as Idea);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchIdea();
-  }, [id]);
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <h2 className="mt-8 text-[14px] uppercase tracking-[-0.01em] text-[#111827]">{children}</h2>;
+}
 
-  if (loading || !idea) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <TopBar title="Loading Report..." subtitle="" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+function TaggedList({ items }: { items: TaggedLine[] }) {
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      {items.map((it, i) => (
+        <div key={it.text} className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] px-3 py-3">
+          <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-[#4F46E5] text-[11px] text-white">{i + 1}</span>
+          <p className="flex-1 text-[14px] text-[#111827]">{it.text}</p>
+          <span className="rounded-full bg-[#E0E7FF] px-3 py-1 text-[11px] text-[#4F46E5]">{it.tag}</span>
         </div>
-      </div>
-    );
-  }
+      ))}
+    </div>
+  );
+}
 
-  // Determine verdict based on idea ID or randomize
-  let verdict: Verdict = "GO";
-  if (id.includes("001")) verdict = "PIVOT";
-  if (id.includes("002")) verdict = "KILL";
+export default function ValidationReportPage() {
+  const { id } = useParams<{ id: string }>();
+  const { survey } = useSurvey(id);
+  if (!survey) return <div className="skeleton mt-14 h-[600px]" />;
 
-  const config = {
-    "GO": {
-      color: "text-[#10B981]",
-      bg: "bg-[#D1FAE5]",
-      border: "border-[#10B981]/30",
-      icon: <HugeiconsIcon icon={Rocket01Icon} size={32} />,
-      title: "Green Light (GO)",
-      message: "Strong market validation. Proceed with development.",
-      score: "85%",
-    },
-    "PIVOT": {
-      color: "text-[#F59E0B]",
-      bg: "bg-[#FEF3C7]",
-      border: "border-[#F59E0B]/30",
-      icon: <HugeiconsIcon icon={Alert01Icon} size={32} />,
-      title: "Pivot Required",
-      message: "Core idea is valid, but the target audience or feature set needs adjustment.",
-      score: "55%",
-    },
-    "KILL": {
-      color: "text-[#EF4444]",
-      bg: "bg-[#FEE2E2]",
-      border: "border-[#EF4444]/30",
-      icon: <HugeiconsIcon icon={Cancel01Icon} size={32} />,
-      title: "Kill Idea",
-      message: "Low market interest or high friction. It is recommended to abandon this concept.",
-      score: "20%",
-    }
-  };
-
-  const v = config[verdict];
+  const report = getValidationReport(survey);
+  const v = VERDICTS[report.verdict];
+  const scoreColor = bandColor(report.validationScore);
+  const scoreLabel = report.validationScore >= 65 ? "Strong validation" : report.validationScore >= 45 ? "Moderate validation" : "Weak validation";
+  const started = new Date(survey.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric" });
 
   return (
-    <div className="flex flex-col min-h-screen pb-24 lg:pb-8">
-      {/* Dynamic TopBar */}
-      <div className="flex items-center gap-4 py-4 px-4 lg:px-8 border-b border-[#F3F4F6] bg-white sticky top-0 z-10">
-        <button onClick={() => router.push(`/founder/ideas/${id}`)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F8F9FC] text-text-secondary hover:text-text-primary transition-colors">
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
-        </button>
+    <div className="flex flex-col pt-10">
+      <ReportHeader switchHref={`/founder/ideas/${id}/feasibility`} switchLabel="View feasibility report" />
+
+      <p className="mt-8 text-[14px] text-[#6B7280]">Validation report</p>
+      <h1 className="text-[20px] tracking-[-0.02em] text-[#111827]">{survey.title}</h1>
+      <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[14px] text-[#6B7280]">
+        <span>Response: <b className="font-semibold text-[#111827]">{survey.respondentsCompleted} verified</b></span>
+        <span>Campaign started: <b className="font-semibold text-[#111827]">{started}</b></span>
+        <span>Confidence score: <b className="font-semibold text-[#111827]">{report.confidence}%</b></span>
+        <span>Status: <b className="font-semibold text-[#111827]">Completed</b></span>
+      </div>
+
+      <div className="mx-auto mt-8 flex w-full max-w-[510px] items-center gap-6 rounded-[24px] px-6 py-6" style={{ background: v.tint }}>
+        <div className="text-center">
+          <p className="text-[28px] font-semibold" style={{ color: v.color }}>{report.confidence}%</p>
+          <p className="text-[12px]" style={{ color: v.color }}>{v.level}</p>
+        </div>
         <div>
-          <h1 className="text-[20px] font-semibold text-text-primary line-clamp-1">AI Report: {idea.title}</h1>
-          <p className="text-xs text-text-secondary">Based on {idea.respondentsCompleted} responses</p>
-        </div>
-        <div className="ml-auto flex gap-2">
-           <button className="btn-secondary py-2 px-4 text-sm gap-2">
-            <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} /> Export PDF
-          </button>
+          <p className="text-[18px] tracking-[-0.02em] text-[#111827]">{v.headline}</p>
+          <p className="mt-1 text-[12px] text-[#6B7280]">{report.summary}</p>
+          <p className="mt-3 flex items-center gap-2 text-[13px] text-[#111827]">
+            AI verdict:
+            <span className="rounded-full px-3 py-0.5 text-[11px] text-white" style={{ background: v.color }}>{v.short}</span>
+          </p>
         </div>
       </div>
 
-      <div className="page-content mt-6 flex flex-col gap-6 max-w-4xl mx-auto w-full">
-        
-        {/* Verdict Banner */}
-        <div className={cn("p-6 lg:p-8 rounded-2xl border flex flex-col md:flex-row items-center gap-6", v.bg, v.border)}>
-           <div className={cn("w-16 h-16 rounded-full flex items-center justify-center bg-white/50", v.color)}>
-              {v.icon}
-           </div>
-           <div className="flex-1 text-center md:text-left">
-              <h2 className={cn("text-[28px] font-bold", v.color)}>{v.title}</h2>
-              <p className="text-body font-medium mt-1 opacity-80">{v.message}</p>
-           </div>
-           <div className="text-center md:text-right border-t md:border-t-0 md:border-l border-black/10 pt-4 md:pt-0 md:pl-6">
-              <p className="text-sm uppercase tracking-wider font-semibold opacity-70">Confidence Score</p>
-              <p className={cn("text-[40px] font-bold leading-none mt-1", v.color)}>{v.score}</p>
-           </div>
+      <SectionTitle>Validation dimensions</SectionTitle>
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
+        {report.dimensions.map((d, i) => {
+          const strength = strengthOf(d.score);
+          const sc = STRENGTH_COLOR[strength];
+          const color = bandColor(d.score);
+          return (
+            <div key={d.key} className={`rounded-2xl border border-[#E5E7EB] p-4 ${i < 2 ? "md:order-1" : "md:order-3"}`}>
+              <div className="flex items-center justify-between">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: sc.soft }}>
+                  <HugeiconsIcon icon={DIM_ICON[d.key]} size={18} color={color} />
+                </span>
+                <span className="rounded-full px-4 py-1 text-[12px]" style={{ color: sc.color, background: sc.soft }}>{strength}</span>
+              </div>
+              <p className="mt-3 text-[16px] text-[#111827]">{d.score}%</p>
+              <p className="text-[12px] text-[#6B7280]">{d.label}</p>
+              <Bar value={d.score} color={color} track={`${color}22`} className="mt-1 h-1" />
+              <p className="mt-1 text-[12px] text-[#6B7280]">{d.note}</p>
+            </div>
+          );
+        })}
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-[#E5E7EB] p-4 md:order-2">
+          <p className="text-[12px] uppercase text-[#6B7280]">Confidence score</p>
+          <p className="mt-3 text-[22px] text-[#111827]">{report.validationScore}%</p>
+          <span className="mt-3 rounded-full px-3 py-1 text-[12px] text-white" style={{ background: scoreColor }}>{scoreLabel}</span>
         </div>
-
-        {/* AI Feasibility Breakdown */}
-        <h3 className="text-[20px] font-semibold text-text-primary mt-4">Feasibility Breakdown</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl">
-            <div className="flex items-center gap-2 mb-3">
-               <div className="w-8 h-8 rounded-lg bg-[#E0E7FF] text-[#4F46E5] flex items-center justify-center">
-                  <HugeiconsIcon icon={Target01Icon} size={16} />
-               </div>
-               <span className="font-semibold text-text-primary">Market Demand</span>
-            </div>
-            <p className="text-sm text-text-secondary mb-4">How badly do users want this solution?</p>
-            <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
-               <div className="h-full bg-[#4F46E5]" style={{ width: verdict === "GO" ? "88%" : verdict === "PIVOT" ? "60%" : "30%" }} />
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl">
-            <div className="flex items-center gap-2 mb-3">
-               <div className="w-8 h-8 rounded-lg bg-[#ECFDF5] text-[#10B981] flex items-center justify-center">
-                  <HugeiconsIcon icon={DollarCircleIcon} size={16} />
-               </div>
-               <span className="font-semibold text-text-primary">Willingness to Pay</span>
-            </div>
-            <p className="text-sm text-text-secondary mb-4">Will they actually open their wallets?</p>
-            <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
-               <div className="h-full bg-[#10B981]" style={{ width: verdict === "GO" ? "75%" : verdict === "PIVOT" ? "45%" : "15%" }} />
-            </div>
-          </div>
-
-          <div className="bg-white border border-[#F3F4F6] p-5 rounded-2xl">
-            <div className="flex items-center gap-2 mb-3">
-               <div className="w-8 h-8 rounded-lg bg-[#FEF2F2] text-[#EF4444] flex items-center justify-center">
-                  <HugeiconsIcon icon={Briefcase02Icon} size={16} />
-               </div>
-               <span className="font-semibold text-text-primary">Execution Risk</span>
-            </div>
-            <p className="text-sm text-text-secondary mb-4">Technical or operational hurdles.</p>
-            <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
-               <div className="h-full bg-[#EF4444]" style={{ width: "40%" }} />
-            </div>
+        <div className="rounded-2xl border border-[#E5E7EB] p-3 md:order-4">
+          <p className="text-[12px] uppercase text-[#111827]">Score distribution</p>
+          <div className="h-[100px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={report.dimensions.map((d) => ({ name: SHORT[d.key], score: d.score }))} margin={{ top: 6, right: 0, left: -32, bottom: 0 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 8, fill: "#111827" }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 8, fill: "#111827" }} axisLine={false} tickLine={false} />
+                <RBar dataKey="score" radius={[2, 2, 0, 0]} barSize={18}>
+                  {report.dimensions.map((d) => (
+                    <Cell key={d.key} fill={bandColor(d.score)} />
+                  ))}
+                </RBar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Detailed Insights */}
-        <div className="bg-white border border-[#F3F4F6] rounded-2xl p-6 lg:p-8 mt-2">
-          <h3 className="text-lg font-semibold text-text-primary mb-6">Key Insights</h3>
-          <ul className="flex flex-col gap-4">
-             <li className="flex gap-4 items-start">
-               <div className="mt-0.5 text-[#10B981]"><HugeiconsIcon icon={CheckmarkCircle01Icon} size={20} /></div>
-               <div>
-                  <p className="font-medium text-text-primary">Problem is real</p>
-                  <p className="text-sm text-text-secondary mt-1">78% of respondents indicated they actively experience the problem described.</p>
-               </div>
-             </li>
-             <li className="flex gap-4 items-start">
-               <div className="mt-0.5 text-[#F59E0B]"><HugeiconsIcon icon={Alert01Icon} size={20} /></div>
-               <div>
-                  <p className="font-medium text-text-primary">Pricing friction</p>
-                  <p className="text-sm text-text-secondary mt-1">Only 30% are willing to pay a monthly subscription, while 65% prefer a one-time fee.</p>
-               </div>
-             </li>
-             <li className="flex gap-4 items-start">
-               <div className="mt-0.5 text-brand-primary"><HugeiconsIcon icon={ChartBarLineIcon} size={20} /></div>
-               <div>
-                  <p className="font-medium text-text-primary">Competitor dissatisfaction</p>
-                  <p className="text-sm text-text-secondary mt-1">Many respondents currently use workarounds and are unhappy with existing tools.</p>
-               </div>
-             </li>
-          </ul>
-        </div>
-        
       </div>
+
+      <SectionTitle>Key insights</SectionTitle>
+      <TaggedList items={report.insights} />
+
+      <SectionTitle>Respondents voice</SectionTitle>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        {report.voices.map((q) => (
+          <div key={q.quote} className="rounded-2xl border border-[#E5E7EB] p-4">
+            <HugeiconsIcon icon={QuoteDownIcon} size={20} className="text-[#111827]" />
+            <p className="mt-3 border-b border-[#E5E7EB] pb-4 text-[14px] text-[#111827]">&ldquo;{q.quote}&rdquo;</p>
+            <p className="mt-3 flex items-center gap-2 text-[14px] text-[#111827]">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#4F46E5] text-[10px] text-white">{getInitials(q.name)}</span>
+              {q.name}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <SectionTitle>Recommended next steps</SectionTitle>
+      <TaggedList items={report.nextSteps} />
     </div>
   );
 }

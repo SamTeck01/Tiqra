@@ -1,18 +1,16 @@
 import { create } from "zustand";
 import { databases, DB_ID, COLLECTIONS } from "@/lib/appwrite";
-import { Survey, Question, TargetAudience } from "@/lib/types";
+import { Survey, Question, IdeaIntake } from "@/lib/types";
+import { EMPTY_INTAKE } from "@/lib/ai";
+import { MIN_RESPONDENTS } from "@/lib/pricing";
 import { ID, Query } from "appwrite";
 
 interface NewSurveyDraft {
-  step: number;
-  title: string;
-  problemStatement: string;
-  targetAudience: string;
-  solution: string;
+  /** "voice" when the idea came from the AI intake, "manual" when typed into the form. */
+  source: "voice" | "manual";
+  intake: IdeaIntake;
   questions: Question[];
   respondents: number;
-  payoutPerResponse: number;
-  targetAudienceConfig: Partial<TargetAudience>;
 }
 
 interface SurveyState {
@@ -23,7 +21,6 @@ interface SurveyState {
   error: string | null;
   // Actions
   setDraftField: <K extends keyof NewSurveyDraft>(key: K, value: NewSurveyDraft[K]) => void;
-  setDraftStep: (step: number) => void;
   resetDraft: () => void;
   fetchSurveys: (userId: string) => Promise<void>;
   fetchSurveyById: (id: string) => Promise<void>;
@@ -32,15 +29,10 @@ interface SurveyState {
 }
 
 const defaultDraft: NewSurveyDraft = {
-  step: 1,
-  title: "",
-  problemStatement: "",
-  targetAudience: "",
-  solution: "",
+  source: "voice",
+  intake: { ...EMPTY_INTAKE },
   questions: [],
-  respondents: 50,
-  payoutPerResponse: 300,
-  targetAudienceConfig: {},
+  respondents: MIN_RESPONDENTS,
 };
 
 export const useSurveyStore = create<SurveyState>((set, get) => ({
@@ -53,10 +45,7 @@ export const useSurveyStore = create<SurveyState>((set, get) => ({
   setDraftField: (key, value) =>
     set((state) => ({ draft: { ...state.draft, [key]: value } })),
 
-  setDraftStep: (step) =>
-    set((state) => ({ draft: { ...state.draft, step } })),
-
-  resetDraft: () => set({ draft: { ...defaultDraft } }),
+  resetDraft: () => set({ draft: { ...defaultDraft, intake: { ...EMPTY_INTAKE } } }),
 
   fetchSurveys: async (userId) => {
     set({ loading: true, error: null });

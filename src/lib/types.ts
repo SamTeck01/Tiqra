@@ -3,6 +3,17 @@ export type SurveyStatus = "draft" | "live" | "completed" | "paused";
 export type IdeaStatus = "draft" | "live" | "completed";
 export type QuestionType = "multiple_choice" | "scale" | "short_text" | "yes_no";
 export type TransactionType = "credit" | "debit" | "withdrawal" | "escrow";
+export type Verdict = "go" | "pivot" | "kill";
+
+/** What the founder tells Tiqra about their idea (voice intake or manual form). */
+export interface IdeaIntake {
+  problem: string;
+  audience: string;
+  solution: string;
+  alternatives: string;
+  advantage: string;
+  pricing: string;
+}
 
 export interface Idea {
   $id: string;
@@ -56,6 +67,11 @@ export interface Survey {
   aiReportGenerated: boolean;
   createdAt: string;
   expiresAt?: string;
+  /** One-line pitch shown under the title on idea cards. */
+  summary?: string;
+  intake?: IdeaIntake;
+  verdict?: Verdict;
+  confidence?: number;
 }
 
 export interface Question {
@@ -100,6 +116,7 @@ export interface Transaction {
   description: string;
   status: "pending" | "completed" | "failed";
   reference?: string;
+  balanceAfter?: number;
   createdAt: string;
 }
 
