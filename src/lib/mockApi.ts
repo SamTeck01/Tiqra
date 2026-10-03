@@ -29,6 +29,37 @@ export const mockAccount = {
     if (!user) throw new Error("Not logged in");
     return { $id: user.$id, email: user.email, name: user.name };
   },
+  createEmailToken: async (userId: string, email: string) => {
+    await delay(500);
+    return { $id: "token_" + Date.now(), userId, secret: "", email };
+  },
+  createSession: async (userId: string, secret: string) => {
+    await delay(500);
+    // Any six-digit code is accepted in mock mode.
+    if (!/^\d{6}$/.test(secret)) throw new Error("Invalid code. Please check the code and try again.");
+    const sessionId = "sess_" + Date.now();
+    runtimeData.sessions.push({ userId, sessionId, token: "mock_token" });
+    return { $id: sessionId, userId };
+  },
+  createOAuth2Session: () => {
+    throw new Error("Google sign-in isn't available in demo mode.");
+  },
+  updatePassword: async (password: string, oldPassword?: string) => {
+    await delay(500);
+    if (!oldPassword) throw new Error("Current password is required");
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
+    return {};
+  },
+  createRecovery: async (email: string, url: string) => {
+    await delay(600);
+    // Real Appwrite emails the secret; the mock hands it back so the reset screen can be reached.
+    return { userId: email, secret: "mock_secret", url };
+  },
+  updateRecovery: async (userId: string, secret: string, password: string) => {
+    await delay(600);
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
+    return {};
+  },
   deleteSession: async (sessionId: string) => {
     await delay(200);
     if (sessionId === "current") {

@@ -16,7 +16,7 @@ const founderNav = [
 
 const earnerNav = [
   { label: "Dashboard", href: "/earner/dashboard", icon: DashboardSquare01Icon, matchExact: true },
-  { label: "Surveys", href: "/earner/surveys", icon: File01Icon },
+  { label: "Survey", href: "/earner/surveys", icon: File01Icon },
   { label: "Wallet", href: "/earner/wallet", icon: Wallet01Icon, matchExact: true },
   { label: "Settings", href: "/earner/settings", icon: Settings01Icon, matchExact: true },
 ];
@@ -26,7 +26,8 @@ export default function MobileBottomNav() {
   const { user } = useAuthStore();
 
   // Don't show on auth pages
-  if (pathname.startsWith("/auth") || pathname === "/splash" || pathname === "/onboarding") {
+  const focusRoute = /^\/earner\/(surveys\/[^/]+|profile)/.test(pathname);
+  if (pathname.startsWith("/auth") || pathname === "/splash" || pathname === "/onboarding" || pathname === "/" || focusRoute) {
     return null;
   }
 

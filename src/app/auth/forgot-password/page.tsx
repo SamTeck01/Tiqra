@@ -1,126 +1,157 @@
 "use client";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft01Icon, ArrowRight01Icon, Loading02Icon, CheckmarkCircle01Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 
-export default function ForgotPasswordPage() {
+import { Suspense, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { ArrowRight02Icon, Key01Icon, SquareLock02Icon, Tick02Icon, ViewIcon, ViewOffSlashIcon } from "@hugeicons/core-free-icons";
+import { useAuthStore } from "@/store/auth.store";
+import { BackLink, primaryBtn } from "@/components/ui/Primitives";
+import { cn } from "@/lib/utils";
+
+const field = "h-12 w-full rounded-xl border border-[#E5E7EB] px-3 pr-11 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] focus:border-[#4F46E5] focus:outline-none";
+
+function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative block">
+      <input {...props} type={show ? "text" : "password"} className={field} />
+      <button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#111827]">
+        <HugeiconsIcon icon={show ? ViewIcon : ViewOffSlashIcon} size={20} />
+      </button>
+    </span>
+  );
+}
+
+function ResetFlow() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const { requestPasswordReset, resetPassword } = useAuthStore();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState<{ userId: string; secret: string } | null>(() => {
+    const userId = params.get("userId");
+    const secret = params.get("secret");
+    return userId && secret ? { userId, secret } : null;
+  });
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [updated, setUpdated] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const send = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setLoading(false);
-    setSent(true);
+    setBusy(true);
+    setError("");
+    try {
+      const t = await requestPasswordReset(email.trim());
+      setSent(true);
+      if (t) setToken(t);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the reset link");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) return;
+    if (password.length < 8) return setError("Use at least 8 characters.");
+    if (password !== confirm) return setError("Passwords don't match.");
+    setBusy(true);
+    setError("");
+    try {
+      await resetPassword(token.userId, token.secret, password);
+      setUpdated(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not reset password");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex bg-[#FEFEFE]">
-      {/* Left panel */}
-      <div
-        className="hidden lg:flex w-[594px] flex-shrink-0 rounded-[40px] m-3 flex-col relative overflow-hidden"
-        style={{ background: "linear-gradient(136deg, #9F4EF5 0%, #E5CAFC 100%)" }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-center px-12">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-3xl">T</span>
-            </div>
-            <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Validate ideas.<br />Make smarter<br />decision
-            </h1>
-            <p className="text-white/70 text-lg">
-              Real feedback from real people,<br />powered by AI truth-layer
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col justify-center px-8 lg:px-20 py-12 max-w-[700px] mx-auto w-full">
-        <Link
-          href="/auth/login"
-          className="inline-flex items-center gap-2 text-body text-text-primary hover:text-text-secondary mb-12 transition-colors font-medium"
-        >
-          <HugeiconsIcon icon={ArrowLeft01Icon} size={24} className="text-[#9F4EF5]" /> Back to login
-        </Link>
-
-        {!sent ? (
-          <>
-            <div className="mb-8 flex flex-col gap-4">
-              <div className="w-20 h-20 bg-[#9F4EF5] rounded-xl flex items-center justify-center">
-                <HugeiconsIcon icon={Mail01Icon} size={40} className="text-white" />
-              </div>
-              <h1 className="text-[40px] font-bold text-text-primary leading-[150%] tracking-[-0.05em]">Forgot your password</h1>
-              <p className="text-lg text-text-secondary w-full max-w-[445px]">
-                No worries, Enter your email address and we'll send you a reset link right away.
+    <div className="flex min-h-screen items-center justify-center bg-[#F8F9FC] px-4">
+      <div className="w-full max-w-[484px] rounded-[24px] bg-white px-6 py-8 sm:px-8">
+        {token ? (
+          <form onSubmit={reset}>
+            {sent && (
+              <p className="inline-flex items-center gap-3 rounded-lg bg-[#111827] px-4 py-2 text-[13px] text-white">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#4F46E5]" /> Reset link sent to your email
               </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-[445px]">
-              <div>
-                <label className="tiqra-label">Email address</label>
-                <div className="relative mt-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="example@gmail.com"
-                    className="tiqra-input"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <button
-                  type="submit"
-                  disabled={loading || !email}
-                  className="btn-primary w-full justify-center disabled:opacity-40 !py-4 !rounded-xl"
-                >
-                  {loading ? (
-                    <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  />
-                  ) : (
-                    <>Send reset link</>
-                  )}
+            )}
+            <span className="mx-auto mt-6 flex h-12 w-12 items-center justify-center rounded-xl bg-[#4F46E5]">
+              <HugeiconsIcon icon={SquareLock02Icon} size={24} className="text-white" />
+            </span>
+            <h1 className="mt-4 text-center text-[20px] text-[#111827]">Set new password</h1>
+            <p className="mx-auto mt-1 max-w-[290px] text-center text-[14px] text-[#6B7280]">
+              Your new password must be different from your previous one. Make it strong.
+            </p>
+            <label className="mt-6 flex flex-col gap-2 text-[14px] text-[#111827]">
+              Password
+              <PasswordInput autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter a strong password" />
+            </label>
+            <label className="mt-4 flex flex-col gap-2 text-[14px] text-[#111827]">
+              Confirm password
+              <PasswordInput autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Repeat your password" />
+            </label>
+            {error && <p className="mt-3 text-[13px] text-[#DC2626]">{error}</p>}
+            {updated ? (
+              <div className="mx-auto mt-5 flex max-w-[290px] items-center justify-between rounded-lg border border-[#BBF7D0] bg-[#E8F8EE] px-3 py-2 text-[14px]">
+                <span className="flex items-center gap-2 text-[#16A34A]"><HugeiconsIcon icon={Tick02Icon} size={18} /> Password updated!</span>
+                <button type="button" onClick={() => router.push("/auth/login")} className="flex items-center gap-1 text-[#4F46E5]">
+                  Sign in now <HugeiconsIcon icon={ArrowRight02Icon} size={18} />
                 </button>
-                <p className="text-center text-lg text-text-primary mt-2">
-                  <span className="text-text-secondary">Remember your password?</span>{" "}
-                  <Link href="/auth/login" className="text-[#9F4EF5]">Sign in</Link>
-                </p>
               </div>
-            </form>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-6 py-8">
-            <div className="w-24 h-24 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]"  />
-            </div>
-            <div className="text-center">
-              <h2 className="text-[32px] font-semibold text-text-primary">Check your email</h2>
-              <p className="text-lg text-text-secondary mt-2">
-                We sent a password reset link to<br />
-                <strong className="text-text-primary">{email}</strong>
-              </p>
-            </div>
-            <p className="text-body text-text-secondary text-center">
-              Didn't receive it?{" "}
-              <button
-                onClick={() => setSent(false)}
-                className="text-brand-primary hover:underline"
-              >
-                Resend email
+            ) : (
+              <button disabled={busy} className={cn(primaryBtn, "mx-auto mt-5 flex h-[42px] w-full max-w-[390px]")}>
+                {busy ? "Saving..." : "Reset password"}
               </button>
-            </p>
-            <Link href="/auth/login" className="btn-secondary w-full justify-center">
-              Back to login
-            </Link>
+            )}
+          </form>
+        ) : sent ? (
+          <div className="text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#4F46E5]">
+              <HugeiconsIcon icon={Key01Icon} size={24} className="text-white" />
+            </span>
+            <h1 className="mt-4 text-[20px] text-[#111827]">Check your email</h1>
+            <p className="mt-1 text-[14px] text-[#6B7280]">We sent a reset link to {email}. Open it to set a new password.</p>
+            <Link href="/auth/login" className="mt-6 inline-block text-[14px] text-[#4F46E5]">Back to login</Link>
           </div>
+        ) : (
+          <form onSubmit={send}>
+            <BackLink href="/auth/login" label="Back to login" />
+            <span className="mx-auto mt-8 flex h-12 w-12 items-center justify-center rounded-xl bg-[#4F46E5]">
+              <HugeiconsIcon icon={Key01Icon} size={24} className="text-white" />
+            </span>
+            <h1 className="mt-4 text-center text-[20px] text-[#111827]">Forgot your password</h1>
+            <p className="mx-auto mt-1 max-w-[290px] text-center text-[14px] text-[#6B7280]">
+              No worries. Enter your email address and we&apos;ll send you a reset link right away.
+            </p>
+            <label className="mt-8 flex flex-col gap-2 text-[14px] text-[#111827]">
+              Email address
+              <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="example@gmail.com" className={field} />
+            </label>
+            {error && <p className="mt-3 text-[13px] text-[#DC2626]">{error}</p>}
+            <button disabled={busy} className={cn(primaryBtn, "mx-auto mt-5 flex h-[42px] w-full max-w-[390px]")}>
+              {busy ? "Sending..." : "Send reset link"}
+            </button>
+            <p className="mt-3 text-center text-[14px] text-[#6B7280]">
+              Remember your password? <Link href="/auth/login" className="text-[#4F46E5]">Sign in</Link>
+            </p>
+          </form>
         )}
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense>
+      <ResetFlow />
+    </Suspense>
   );
 }

@@ -1,561 +1,213 @@
 "use client";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Briefcase01Icon, Call02Icon, LockIcon, Mail01Icon, Rocket01Icon, UserIcon } from "@hugeicons/core-free-icons";
 import { useAuthStore } from "@/store/auth.store";
-import { ViewIcon, ViewOffIcon, ArrowRight01Icon, Loading02Icon, CheckmarkCircle01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons";
+import { AuthField, AuthSplit, AuthSuccess, AuthTitle, GoogleButton, OrDivider } from "@/components/auth/AuthUI";
+import { BackLink, primaryBtn } from "@/components/ui/Primitives";
+import { UserRole } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-type Role = "founder" | "earner";
+const ROLES: { role: UserRole; title: string; body: string; icon: typeof Rocket01Icon }[] = [
+  { role: "founder", title: "Founder", body: "Validate your ideas and build your startup.", icon: Rocket01Icon },
+  { role: "earner", title: "Earner", body: "Answer surveys and share your opinions to earn money.", icon: Briefcase01Icon },
+];
 
-interface FormData {
-  role: Role | null;
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  // earner demographics
-  age: string;
-  gender: string;
-  location: string;
-  occupation: string;
-  industry: string;
+const RESEND_SECONDS = 90;
+
+function CodeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const refs = useRef<(HTMLInputElement | null)[]>([]);
+  const set = (i: number, d: string) => {
+    const chars = value.padEnd(6, " ").split("");
+    chars[i] = d || " ";
+    onChange(chars.join("").trimEnd());
+    if (d && i < 5) refs.current[i + 1]?.focus();
+  };
+  return (
+    <div className="flex items-center justify-center gap-2" onPaste={(e) => {
+      const digits = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+      if (digits) { e.preventDefault(); onChange(digits); refs.current[Math.min(digits.length, 5)]?.focus(); }
+    }}>
+      {Array.from({ length: 6 }, (_, i) => (
+        <span key={i} className="flex items-center gap-2">
+          {i === 3 && <span className="h-px w-4 bg-[#E5E7EB]" />}
+          <input
+            ref={(el) => { refs.current[i] = el; }}
+            inputMode="numeric"
+            maxLength={1}
+            aria-label={`Digit ${i + 1}`}
+            value={value[i]?.trim() ?? ""}
+            onChange={(e) => set(i, e.target.value.replace(/\D/g, ""))}
+            onKeyDown={(e) => { if (e.key === "Backspace" && !value[i]?.trim() && i > 0) refs.current[i - 1]?.focus(); }}
+            className={cn(
+              "h-[52px] w-[46px] rounded-lg border text-center text-[20px] text-[#111827] focus:border-[#4F46E5] focus:outline-none",
+              value[i]?.trim() ? "border-[#4F46E5]" : "border-[#E5E7EB]"
+            )}
+          />
+        </span>
+      ))}
+    </div>
+  );
 }
 
-const STEPS = ["Role", "Details", "Password", "Verify"];
-
 export default function RegisterPage() {
-  const router = useRouter();
-  const { register, loading, error, clearError } = useAuthStore();
-  const [step, setStep] = useState(1);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [form, setForm] = useState<FormData>({
-    role: null,
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    age: "",
-    gender: "",
-    location: "",
-    occupation: "",
-    industry: "",
-  });
+  const { startSignup, confirmSignup, resendSignupCode, loginWithGoogle, pendingSignup } = useAuthStore();
+  const [step, setStep] = useState<"role" | "details" | "code" | "done">("role");
+  const [role, setRole] = useState<UserRole>("founder");
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [countdown, setCountdown] = useState(RESEND_SECONDS);
 
-  const update = (k: keyof FormData, v: string | Role) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  useEffect(() => {
+    if (step !== "code" || countdown <= 0) return;
+    const t = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [step, countdown]);
 
-  const next = () => { clearError(); setStep((s) => s + 1); };
-  const back = () => setStep((s) => s - 1);
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
-  const handleSubmit = async () => {
-    clearError();
+  const register = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (form.password.length < 8) return setError("Password must be at least 8 characters.");
+    if (form.password !== form.confirm) return setError("Passwords don't match.");
+    setError("");
+    setBusy(true);
     try {
-      // Correct arg order: name, email, password, role
-      await register(form.name, form.email, form.password, form.role!);
-      setStep(4);
-    } catch {}
+      await startSignup({ name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(), password: form.password, role });
+      setCountdown(RESEND_SECONDS);
+      setStep("code");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  // Dynamic gradient: purple for Founder (Figma #426-1468), blue for Earner (Figma #689-1632)
-  const panelGradient = form.role === "earner"
-    ? "linear-gradient(136deg, #2563EB 0%, #9FB5E7 100%)"
-    : "linear-gradient(136deg, #9F4EF5 0%, #E5CAFC 100%)";
+  const confirm = async () => {
+    setError("");
+    setBusy(true);
+    try {
+      await confirmSignup(code);
+      setStep("done");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid code");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (step === "done") {
+    const first = form.name.trim().split(" ")[0];
+    return (
+      <AuthSuccess
+        title="Account created successfully!!"
+        message={
+          role === "earner" ? (
+            <>Welcome to TIQRA, <b className="font-semibold text-[#111827]">{first}</b>. Proceed to the dashboard to complete your verification and start earning.</>
+          ) : (
+            <>Welcome to TIQRA, <b className="font-semibold text-[#111827]">{first}</b>. Proceed to the dashboard and start validating.</>
+          )
+        }
+        href={`/${role}/dashboard`}
+      />
+    );
+  }
+
+  const google = () => {
+    try {
+      loginWithGoogle();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Google sign-in failed");
+    }
+  };
 
   return (
-    <div className="min-h-screen flex bg-[#FEFEFE]">
-      {/* Left panel – dynamic brand gradient (purple=Founder, blue=Earner) */}
-      <div
-        className="hidden lg:flex w-[594px] flex-shrink-0 rounded-[40px] m-3 flex-col relative overflow-hidden transition-all duration-700"
-        style={{ background: panelGradient }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-white text-center px-12">
-            {/* Tiqra SVG Logo */}
-            <div className="flex items-center justify-center gap-3 mb-8">
-              <svg width="180" height="54" viewBox="0 0 180 54" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 42L24 12L42 42H30L24 30L18 42H6Z" fill="white" fillOpacity="0.95" />
-                <path d="M18 42L24 30L30 42" fill="white" fillOpacity="0.5" />
-                <text x="54" y="39" fontFamily="inherit" fontSize="33" fontWeight="700" fill="white" letterSpacing="-0.8">Tiqra</text>
-              </svg>
-            </div>
-            <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-              Validate ideas.<br />Make smarter<br />decision
-            </h1>
-            <p className="text-white/70 text-lg">
-              Real feedback from real people,<br />powered by AI truth-layer
-            </p>
+    <AuthSplit audience={role}>
+      {step === "role" && (
+        <>
+          <Image src="/logo.png" alt="Tiqra" width={160} height={70} className="mx-auto h-auto w-[160px]" priority />
+          <div className="mt-8">
+            <AuthTitle title="Join us Today!" subtitle="Be part of a platform where ideas get validated, opinions matter and everyone earns." />
           </div>
-        </div>
-      </div>
+          <p className="mt-6 text-[18px] text-[#111827]">Sign up as:</p>
+          <div className="mt-3 flex flex-col gap-3">
+            {ROLES.map((r) => (
+              <label
+                key={r.role}
+                className={cn(
+                  "flex cursor-pointer items-center gap-4 rounded-xl border px-3 py-3",
+                  role === r.role ? "border-[#4F46E5] bg-[#E0E7FF]" : "border-transparent bg-[#F8F9FC]"
+                )}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#6B7280]">
+                  <HugeiconsIcon icon={r.icon} size={18} />
+                </span>
+                <span className="flex-1">
+                  <span className="block text-[16px] text-[#111827]">{r.title}</span>
+                  <span className="block text-[12px] text-[#6B7280]">{r.body}</span>
+                </span>
+                <input type="radio" name="role" checked={role === r.role} onChange={() => setRole(r.role)} className="h-5 w-5 accent-[#4F46E5]" />
+              </label>
+            ))}
+          </div>
+          <button onClick={() => setStep("details")} className={cn(primaryBtn, "mt-5 h-12 w-full")}>Proceed</button>
+          <OrDivider />
+          <GoogleButton onClick={google} />
+          {error && <p className="mt-3 text-center text-[13px] text-[#DC2626]">{error}</p>}
+          <p className="mt-3 text-center text-[14px] text-[#111827]">
+            Already have an account? <Link href="/auth/login" className="text-[#4F46E5]">Login</Link>
+          </p>
+        </>
+      )}
 
+      {step === "details" && (
+        <>
+          <BackLink label="Back" onClick={() => { setError(""); setStep("role"); }} />
+          <div className="mt-8">
+            <AuthTitle title={role === "earner" ? "Create Earner Account" : "Create Founder Account"} subtitle="Fill in your details to get started" />
+          </div>
+          <form onSubmit={register} className="mt-6 flex flex-col gap-3">
+            <AuthField label="Full Name" icon={<HugeiconsIcon icon={UserIcon} size={20} />} required autoComplete="name" value={form.name} onChange={set("name")} placeholder="e.g John Doe" />
+            <AuthField label="Email" icon={<HugeiconsIcon icon={Mail01Icon} size={20} />} type="email" required autoComplete="email" value={form.email} onChange={set("email")} placeholder="e.g you@gmail.com" />
+            <AuthField label="Phone Number" icon={<HugeiconsIcon icon={Call02Icon} size={20} />} type="tel" required autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="+234 901 234 5678" />
+            <AuthField label="Password" icon={<HugeiconsIcon icon={LockIcon} size={20} />} type="password" required autoComplete="new-password" value={form.password} onChange={set("password")} placeholder="Enter your password" />
+            <AuthField label="Confirm password" icon={<HugeiconsIcon icon={LockIcon} size={20} />} type="password" required autoComplete="new-password" value={form.confirm} onChange={set("confirm")} placeholder="Confirm your password" />
+            {error && <p className="text-[13px] text-[#DC2626]">{error}</p>}
+            <button disabled={busy} className={cn(primaryBtn, "mt-2 h-12 w-full")}>{busy ? "Creating account..." : "Register"}</button>
+          </form>
+          <OrDivider />
+          <GoogleButton onClick={google} />
+          <p className="mt-3 text-center text-[14px] text-[#111827]">
+            Already have an account? <Link href="/auth/login" className="text-[#4F46E5]">Login</Link>
+          </p>
+        </>
+      )}
 
-      {/* Right panel */}
-      <div className="flex-1 flex flex-col justify-center px-8 lg:px-20 py-12 max-w-[700px] mx-auto w-full">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[32px] font-semibold text-text-primary leading-[150%] tracking-[-0.03em]">
-            Create your account
-          </h1>
-          <p className="text-lg text-text-primary mt-1">
-            <span className="text-text-secondary">Already have one?</span>{" "}
-            <Link href="/auth/login" className="text-brand-primary font-medium hover:underline">
-              Sign in
-            </Link>
+      {step === "code" && (
+        <div className="pt-6">
+          <AuthTitle title="Confirm your email" subtitle={`We sent a code to ${pendingSignup?.email ?? form.email}`} />
+          <div className="mt-6">
+            <CodeInput value={code} onChange={setCode} />
+          </div>
+          {error && <p className="mt-3 text-center text-[13px] text-[#DC2626]">{error}</p>}
+          <button disabled={code.replace(/\s/g, "").length !== 6 || busy} onClick={confirm} className={cn(primaryBtn, "mx-auto mt-5 flex h-[35px] w-full max-w-[250px] text-[13px]")}>
+            {busy ? "Confirming..." : "Confirm"}
+          </button>
+          <p className="mt-3 text-center text-[14px] text-[#111827]">
+            Didn&apos;t get it?{" "}
+            {countdown > 0 ? (
+              <span className="text-[#A5B4FC]">Resend code {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}</span>
+            ) : (
+              <button onClick={() => resendSignupCode().then(() => setCountdown(RESEND_SECONDS))} className="text-[#4F46E5]">Resend code</button>
+            )}
           </p>
         </div>
-
-        {/* Step progress */}
-        <div className="flex items-center gap-0 mb-10">
-          {STEPS.map((label, i) => {
-            const num = i + 1;
-            const isActive = num === step;
-            const isDone = num < step;
-            return (
-              <div key={label} className="flex items-center gap-2">
-                <div className="flex flex-col items-center gap-2">
-                  <div
-                    className={cn(
-                      "w-[60px] h-[60px] rounded-full flex items-center justify-center border-2 transition-all",
-                      isDone
-                        ? "bg-brand-primary border-brand-primary"
-                        : isActive
-                        ? "bg-[#F8F9FC] border-brand-primary"
-                        : "bg-[#F8F9FC] border-[#F8F9FC]"
-                    )}
-                  >
-                    {isDone ? (
-                      <HugeiconsIcon icon={CheckmarkCircle01Icon} size={24} className="text-white"  />
-                    ) : (
-                      <span
-                        className={cn(
-                          "text-[24px] font-semibold",
-                          isActive ? "text-text-primary" : "text-text-secondary"
-                        )}
-                      >
-                        {num}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className={cn(
-                      "text-lg text-center",
-                      isActive ? "text-brand-primary" : isDone ? "text-text-secondary" : "text-text-primary"
-                    )}
-                  >
-                    {label}
-                  </span>
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    className={cn(
-                      "h-px w-20 mb-8 transition-all",
-                      isDone ? "bg-brand-primary" : "bg-[#E5E7EB]"
-                    )}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="mb-5 p-4 bg-[#FEE2E2] border border-[#DC2626]/20 rounded-xl text-[#DC2626] text-body">
-            {error}
-          </div>
-        )}
-
-        {/* ── Step 1: Role ── */}
-        {step === 1 && (
-          <div className="flex flex-col gap-6">
-            <h2 className="text-[24px] font-semibold text-center text-text-primary">
-              I want to......
-            </h2>
-            <div className="flex gap-4">
-              {/* Founder card — purple accent when selected */}
-              <button
-                onClick={() => update("role", "founder")}
-                className={cn(
-                  "flex-1 rounded-[30px] border-[1.5px] p-6 flex flex-col items-center gap-3 transition-all cursor-pointer",
-                  form.role === "founder"
-                    ? "bg-[#F8F9FC] border-[#9F4EF5]"
-                    : "bg-[#FFFFFF] border-[#E5E7EB]"
-                )}
-              >
-                <div
-                  className="w-[60px] h-[60px] rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: form.role === "founder" ? "#9F4EF5" : "#F8F9FC" }}
-                >
-                  <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                    <path
-                      d="M5 22.5L12.5 7.5L20 22.5"
-                      stroke={form.role === "founder" ? "white" : "#9CA3AF"}
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    />
-                    <path
-                      d="M7.5 17.5H17.5"
-                      stroke={form.role === "founder" ? "white" : "#9CA3AF"}
-                      strokeWidth="2" strokeLinecap="round"
-                    />
-                    <circle cx="22.5" cy="20" r="4"
-                      stroke={form.role === "founder" ? "white" : "#9CA3AF"}
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </div>
-                <span
-                  className="text-lg font-medium"
-                  style={{ color: form.role === "founder" ? "#9F4EF5" : "#111827" }}
-                >
-                  Validate ideas
-                </span>
-                <span className="text-body text-[#6B7280] text-center">I&apos;m a founder</span>
-              </button>
-
-              {/* Earner card — blue accent when selected (Figma #689-1632) */}
-              <button
-                onClick={() => update("role", "earner")}
-                className={cn(
-                  "flex-1 rounded-[30px] border-[1.5px] p-6 flex flex-col items-center gap-3 transition-all cursor-pointer",
-                  form.role === "earner"
-                    ? "bg-[#F8F9FC] border-[#2563EB]"
-                    : "bg-[#FFFFFF] border-[#E5E7EB]"
-                )}
-              >
-                <div
-                  className="w-[60px] h-[60px] rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: form.role === "earner" ? "#2563EB" : "#F8F9FC" }}
-                >
-                  <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                    <rect x="5" y="8" width="20" height="14" rx="2"
-                      stroke={form.role === "earner" ? "white" : "#9CA3AF"}
-                      strokeWidth="2"
-                    />
-                    <path d="M5 13H25"
-                      stroke={form.role === "earner" ? "white" : "#9CA3AF"}
-                      strokeWidth="2"
-                    />
-                    <path d="M10 18H14"
-                      stroke={form.role === "earner" ? "white" : "#9CA3AF"}
-                      strokeWidth="2" strokeLinecap="round"
-                    />
-                  </svg>
-                </div>
-                <span
-                  className="text-lg font-medium"
-                  style={{ color: form.role === "earner" ? "#2563EB" : "#111827" }}
-                >
-                  Earn money
-                </span>
-                <span className="text-body text-[#6B7280] text-center">I&apos;m a respondent</span>
-              </button>
-            </div>
-
-            {/* Info box */}
-            {form.role && (
-              <div className="flex items-start gap-3 bg-[#F8F9FC] rounded-xl p-4">
-                <div className="w-3 h-3 rounded-full bg-brand-primary mt-1 flex-shrink-0" />
-                <p className="text-body text-text-primary leading-relaxed">
-                  {form.role === "founder" ? (
-                    <>
-                      As a <strong>Founder</strong>, you&apos;ll submit your idea, get AI generated survey questions, and receive a GO / PIVOT / KILL decision backed by real data.
-                    </>
-                  ) : (
-                    <>
-                      As a <strong>Earner</strong>, you&apos;ll complete surveys from real founder and earn money per valid survey. Withdraw your earnings directly to your bank account.
-                    </>
-                  )}
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3 mt-2">
-              <button className="btn-secondary w-full justify-center gap-3">
-                <svg width="20" height="20" viewBox="0 0 20 20">
-                  <path
-                    d="M18.77 8.2H10.18v3.46h4.94c-.46 2.11-2.26 3.46-4.94 3.46-3.04 0-5.49-2.46-5.49-5.5s2.45-5.5 5.49-5.5c1.39 0 2.61.47 3.57 1.38l2.54-2.54C14.83 1.96 12.63 1 10.18 1 5.12 1 1 5.12 1 10.18s4.12 9.18 9.18 9.18c5.24 0 8.72-3.68 8.72-8.88 0-.59-.06-1.18-.13-1.28z"
-                    fill="#4285F4"
-                  />
-                </svg>
-                Continue with google
-              </button>
-              
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-[#E5E7EB]" />
-                <span className="text-body text-text-secondary">Or continue with email</span>
-                <div className="h-px flex-1 bg-[#E5E7EB]" />
-              </div>
-
-              <button
-                onClick={() => { if (form.role) next(); }}
-                disabled={!form.role}
-                className="btn-primary w-full justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 2: Details ── */}
-        {step === 2 && (
-          <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-3 mb-2">
-              <button onClick={back} className="p-2 rounded-lg hover:bg-[#F8F9FC] transition-colors">
-                <HugeiconsIcon icon={ArrowLeft01Icon} size={24} className="text-text-secondary"  />
-              </button>
-              <div>
-                <h2 className="text-[24px] font-semibold text-text-primary">Your Details</h2>
-                <p className="text-lg text-text-secondary">Step 2 of 4 – Account details</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="tiqra-label">Full Name</label>
-              <input
-                type="text"
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-                placeholder="Enter your full name"
-                className="tiqra-input"
-              />
-            </div>
-            <div>
-              <label className="tiqra-label">Email Address</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="you@example.com"
-                className="tiqra-input"
-              />
-            </div>
-
-            {form.role === "earner" && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="tiqra-label">Age</label>
-                    <input
-                      type="number"
-                      value={form.age}
-                      onChange={(e) => update("age", e.target.value)}
-                      placeholder="25"
-                      className="tiqra-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="tiqra-label">Gender</label>
-                    <select
-                      value={form.gender}
-                      onChange={(e) => update("gender", e.target.value)}
-                      className="tiqra-input"
-                    >
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="non-binary">Non-binary</option>
-                      <option value="prefer-not">Prefer not to say</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="tiqra-label">Location</label>
-                  <input
-                    type="text"
-                    value={form.location}
-                    onChange={(e) => update("location", e.target.value)}
-                    placeholder="Lagos, Nigeria"
-                    className="tiqra-input"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="tiqra-label">Occupation</label>
-                    <input
-                      type="text"
-                      value={form.occupation}
-                      onChange={(e) => update("occupation", e.target.value)}
-                      placeholder="Software Engineer"
-                      className="tiqra-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="tiqra-label">Industry</label>
-                    <input
-                      type="text"
-                      value={form.industry}
-                      onChange={(e) => update("industry", e.target.value)}
-                      placeholder="Technology"
-                      className="tiqra-input"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            <button
-              onClick={() => { if (form.name && form.email) next(); }}
-              disabled={!form.name || !form.email}
-              className="btn-primary w-full justify-center mt-2 disabled:opacity-40"
-            >
-              Continue <HugeiconsIcon icon={ArrowRight01Icon} size={20}  />
-            </button>
-          </div>
-        )}
-
-        {/* ── Step 3: Password ── */}
-        {step === 3 && (
-          <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-3 mb-2">
-              <button onClick={back} className="p-2 rounded-lg hover:bg-[#F8F9FC] transition-colors">
-                <HugeiconsIcon icon={ArrowLeft01Icon} size={24} className="text-text-secondary"  />
-              </button>
-              <div>
-                <h2 className="text-[24px] font-semibold text-text-primary">Create Password</h2>
-                <p className="text-lg text-text-secondary">Step 3 of 4 – Secure your account</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="tiqra-label">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={form.password}
-                  onChange={(e) => update("password", e.target.value)}
-                  placeholder="Min. 8 characters"
-                  className="tiqra-input pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary"
-                >
-                  {showPassword ? <HugeiconsIcon icon={ViewOffIcon} size={20}  /> : <HugeiconsIcon icon={ViewIcon} size={20}  />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="tiqra-label">Confirm Password</label>
-              <div className="relative">
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  value={form.confirmPassword}
-                  onChange={(e) => update("confirmPassword", e.target.value)}
-                  placeholder="Repeat your password"
-                  className="tiqra-input pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary"
-                >
-                  {showConfirm ? <HugeiconsIcon icon={ViewOffIcon} size={20}  /> : <HugeiconsIcon icon={ViewIcon} size={20}  />}
-                </button>
-              </div>
-              {form.confirmPassword && form.password !== form.confirmPassword && (
-                <p className="text-sm text-[#DC2626] mt-1">Passwords don&apos;t match</p>
-              )}
-            </div>
-
-            {/* Password strength indicators */}
-            <div className="flex flex-col gap-2">
-              {[
-                { label: "At least 8 characters", ok: form.password.length >= 8 },
-                { label: "Contains a number", ok: /\d/.test(form.password) },
-                { label: "Contains a special character", ok: /[^A-Za-z0-9]/.test(form.password) },
-              ].map(({ label, ok }) => (
-                <div key={label} className="flex items-center gap-2 text-sm">
-                  <div
-                    className={cn(
-                      "w-4 h-4 rounded-full flex items-center justify-center",
-                      ok ? "bg-[#16A34A]" : "bg-[#E5E7EB]"
-                    )}
-                  >
-                    {ok && <HugeiconsIcon icon={CheckmarkCircle01Icon} size={10} className="text-white"  />}
-                  </div>
-                  <span className={ok ? "text-[#16A34A]" : "text-text-secondary"}>{label}</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={
-                loading ||
-                form.password.length < 8 ||
-                form.password !== form.confirmPassword
-              }
-              className="btn-primary w-full justify-center mt-2 disabled:opacity-40"
-            >
-              {loading ? <HugeiconsIcon icon={Loading02Icon} size={20} className="animate-spin"  /> : <>Create Account <HugeiconsIcon icon={ArrowRight01Icon} size={20}  /></>}
-            </button>
-          </div>
-        )}
-
-        {/* ── Step 4: Verify / Success ── */}
-        {step === 4 && (
-          <div className="flex flex-col items-center gap-8 py-8 w-full max-w-[503px] mx-auto">
-            <div className="w-[120px] h-[120px] rounded-full bg-[#ECFDF5] border-[1.5px] border-[#16A34A] flex items-center justify-center mb-2">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} size={48} className="text-[#16A34A]" />
-            </div>
-            
-            <div className="text-center flex flex-col gap-2">
-              <h1 className="text-[40px] font-bold text-text-primary leading-[150%] tracking-[-0.05em]">
-                You&apos;re in!!!
-              </h1>
-              <p className="text-lg text-text-secondary leading-[120%]">
-                Your account has been verified. Welcome to TIQRA, <span className="font-medium text-text-primary">{form.name || "User"}</span>.{" "}
-                {form.role === "founder" 
-                  ? "Start validating your ideas with real data."
-                  : "Start earning by sharing your opinions."}
-              </p>
-            </div>
-
-            <div className="w-full flex flex-col gap-6 mt-4">
-              <h3 className="text-lg text-brand-primary uppercase tracking-wider text-left w-full">
-                WHAT&apos;S NEXT
-              </h3>
-              
-              <div className="flex flex-col gap-4 w-full">
-                {[
-                  form.role === "founder"
-                    ? "Upload your idea and specify your target audience"
-                    : "Answer short surveys and get paid for each response",
-                  form.role === "founder"
-                    ? "Get AI generated survey questions"
-                    : "Get matched with surveys that fits you",
-                  form.role === "founder"
-                    ? "Receive a GO / PIVOT / KILL decision backed by real data"
-                    : "Earn rewards instantly after completion"
-                ].map((text, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="w-[25px] h-[25px] rounded bg-brand-primary flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-base">{idx + 1}</span>
-                    </div>
-                    <span className="text-base text-text-secondary">
-                      {text}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={() =>
-                router.push(form.role === "earner" ? "/earner/dashboard" : "/founder/dashboard")
-              }
-              className="btn-primary w-full justify-center mt-4"
-            >
-              Go To Dashboard <HugeiconsIcon icon={ArrowRight01Icon} size={24} />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </AuthSplit>
   );
 }
